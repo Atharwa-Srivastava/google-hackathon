@@ -1,4 +1,4 @@
-# WasteWise — Product Overview and Feature Specification
+# Eco Tracker — Product Overview and Feature Specification
 
 **Tagline:** A little clarity. A greener community.
 
@@ -6,9 +6,9 @@
 
 **Document status:** Product description and development specification, reviewed on 23 October 2026. This document distinguishes the current prototype from proposed features. Describing a feature here does not mean it is already available in the app.
 
-## 1. What is WasteWise?
+## 1. What is Eco Tracker?
 
-WasteWise is a mobile-friendly AI waste-management assistant. A user can upload a photograph, describe an item, or point their camera at a waste pile. The app helps identify visible waste, suggests materials, and explains the disposal rules that apply under a supplied local guide.
+Eco Tracker is a mobile-friendly AI waste-management assistant. A user can upload a photograph, describe an item, or point their camera at a waste pile. The app helps identify visible waste, suggests materials, and explains the disposal rules that apply under a supplied local guide.
 
 It is designed to answer practical questions:
 
@@ -28,7 +28,7 @@ Everyday waste is difficult to sort because materials, contamination, mixed pack
 
 People also face a practical gap after receiving advice: they may not know who will collect the sorted waste or when. A future pickup service should help close that gap. Rewards should encourage repeated, responsible participation without encouraging people to generate more rubbish.
 
-WasteWise combines identification, understandable guidance, useful recovery options, and a planned collection-and-rewards service in one experience.
+Eco Tracker combines identification, understandable guidance, useful recovery options, and a planned collection-and-rewards service in one experience.
 
 ## 3. Who the app is for
 
@@ -119,7 +119,7 @@ Each supported recommendation includes its rule ID and supporting passage. Colou
 
 ## 7. Overall waste-management summary
 
-After analysis, WasteWise presents a practical plan for the whole group of waste rather than leaving the user with isolated labels.
+After analysis, Eco Tracker presents a practical plan for the whole group of waste rather than leaving the user with isolated labels.
 
 The plan groups items by destination and explains:
 
@@ -141,7 +141,7 @@ Component rows describe parts of the same object; they must not be presented as 
 
 ## 8. Composting, fertilizer, and reuse education
 
-WasteWise should help users see waste as a potential resource where that is appropriate.
+Eco Tracker should help users see waste as a potential resource where that is appropriate.
 
 For confirmed suitable scraps, the summary explains a basic home-composting process: remove packaging, prepare scraps, mix suitable greens with browns, manage moisture and air, and allow decomposition and curing. It explains how mature compost can improve garden soil or serve as mulch.
 
@@ -275,7 +275,7 @@ Future pickup records introduce addresses and contact details that the present s
 
 ## 15. Relationship to the original problem statement
 
-| Original minimum requirement | WasteWise response |
+| Original minimum requirement | Eco Tracker response |
 | --- | --- |
 | Accept an item photograph or text description | Both input methods are implemented; live camera scanning is an additional flow. |
 | Suggest material and ask clarifying questions | Materials, uncertain detections, editable identifications, and condition checks are implemented. |
@@ -307,4 +307,4 @@ Introduce a wallet only after handover verification works. Test duplicate submis
 
 Potential additions include a household waste dashboard, recycling knowledge challenges, partner-funded offers, multilingual guidance, and more approved localities. Report verified quantities and participation separately from AI estimates. Environmental-impact claims need a documented measurement method.
 
-Success means users can understand the advice, prepare waste correctly, complete an accepted handover, and understand exactly why they did or did not receive a reward. WasteWise should make that process useful and approachable while being honest about what the AI and collection service can confirm.
+Success means users can understand the advice, prepare waste correctly, complete an accepted handover, and understand exactly why they did or did not receive a reward. Eco Tracker should make that process useful and approachable while being honest about what the AI and collection service can confirm.

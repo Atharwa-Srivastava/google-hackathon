@@ -1,4 +1,4 @@
-# WasteWise
+# Eco Tracker
 
 Mobile-friendly waste sorting with single- and multiple-item photo recognition, guide citations, editable identifications and automatic browser-local history.
 
