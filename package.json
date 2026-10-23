@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node scripts/build-worker.mjs && node --test tests/*.test.mjs",
+    "build": "node scripts/build-worker.mjs && node scripts/validate-artifact.mjs"
   }
 }

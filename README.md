@@ -1,34 +1,35 @@
-# WasteWise prototype
+# WasteWise
 
-Run `npm start` in this directory, then open http://127.0.0.1:4173. No dependencies or build step. Run `npm test` for catalog checks.
+Mobile-friendly waste sorting with single- and multiple-item photo recognition, guide citations, editable identifications and automatic browser-local history.
 
-Includes responsive photo/text input, 20 item types, clarification for ambiguity and pizza-box contamination, mixed coffee-cup component guidance, exact guide passages, correction, and browser-local disposal history with deletion.
+## Local API configuration
 
-## Demo and Gemini
+Open `.env` in this project and add your own key:
 
-The default demo is deterministic and requires no key. It does not recognize images: uploaded photos lead to explicit manual confirmation. Try the four example cards, a greasy pizza box, or an ambiguous “bottle”.
+```dotenv
+AI_PROVIDER=apinex
+APINEX_API_KEY=your_apinex_key
+APINEX_MODEL=free/gemini-3.8-flash
+GOOGLE_API_KEY=
+GOOGLE_MODEL=gemini-3.8-flash
+```
 
-Use the top-right Demo mode button to enter a Gemini API key from Google AI Studio. The key is held in memory only and sent directly to Google's generateContent endpoint. Photos, user text and the complete sample guide are sent only when you request analysis. Uses gemini-2.5-flash. Live API calls require a valid key and available quota; the app reports failures rather than silently pretending to analyze. This prototype's browser-side key entry is for individual development; a production app should use a server-side secret and authentication.
+Start with `npm start`, then open http://127.0.0.1:4173. Restart the server after changing `.env`. No dependency installation is needed; use Node.js 24 or later.
 
-Gemini proposes catalog identification and a guide rule ID. The app verifies the ID against its catalog and renders exact stored guide passages rather than unverified model-generated disposal instructions. Uncertain outputs lead to clarification.
+To use Google instead, set `AI_PROVIDER=google` and fill `GOOGLE_API_KEY`. Keys are selected on the server; visitors never enter them or receive them. Model IDs are editable to match the account's available models. Free availability is determined by Apinex.
 
-## Guide scope
+`.env` is ignored by Git. `.env.example` contains blank placeholders and is tracked. Neither file is served to browsers. The server sends only the photo, description and supplied guide to the configured provider. Browser requests go to `/api/analyze`; credentials and provider requests stay server-side. History contains text results only, up to 100 entries on the current browser.
 
-Greenfield Campus is fictional. No real local guide was supplied. `dist/catalog.js` contains the clearly labeled sample guide and item mapping. Replace both with an approved local guide before real use. This prototype supports one bundled guide, not arbitrary guide uploads. History stores text results only, up to 100 entries on the current browser; it never stores photos or API keys.
+## Hosted website
 
-## Demo walkthrough
+The live Site uses a Worker backend. The local `.env` file is deliberately not bundled or deployed. Configure `APINEX_API_KEY` as a **secret runtime environment variable** in Sites and redeploy the saved version to apply it. Use the same environment variable names as `.env`; `AI_PROVIDER` defaults to `apinex`. To switch later, set `GOOGLE_API_KEY` as a secret and change `AI_PROVIDER` to `google`, then redeploy. Never place key values in `.openai/hosting.json`, public files, source commits or build output.
 
-1. Plastic bottle → dry recycling, rinse and dry, rule R1; save result.
-2. Pizza box → condition question → split clean and greasy sections, rule R2.
-3. Coffee cup → separate lined cup and rigid plastic lid, rule R6.
-4. Upload an unclear photo → manual confirmation in demo mode, or uncertainty-aware Gemini analysis with a key.
-5. Correct identification and save; reload and review My history.
+No key was supplied during implementation. The hosted site will show AI setup pending until a production key is configured. The local server will also remain pending until you populate `.env` and restart it. The sample demos remain usable meanwhile.
 
-API reference: https://ai.google.dev/api/generate-content
+`npm run build` embeds public assets and server logic into `dist/server/index.js` and validates the Worker export. Build output uses runtime bindings, never values from `.env`. Run `npm test` for catalog, multi-item, provider-format and server tests. Hosted source packaging runs `node scripts/build-worker.mjs` and `node scripts/validate-artifact.mjs`.
 
-## AI providers and automatic history
-AI settings supports Apinex at https://api.apinex.bond/v1/chat/completions (default editable model gemini/3.8-flash) and direct Google Gemini (default editable model gemini-3.8-flash). Enter the exact model ID available in your provider account. Free access is determined by the provider. Keys are held separately in tab memory and never stored in history. Browser requests require provider CORS support. No live provider calls were verified without a key.
-Successful identifications save automatically, including demo results. Corrections replace the current history entry; reviewing an entry does not create a duplicate. Unresolved questions and failed requests are not saved as completed disposals.
+## Prototype scope
 
-## Multiple-item photos
-AI scans the full scene and returns up to 30 visible groups, with labels, positions, visible counts and individual uncertainty. Supported clear items receive validated guide rules and save automatically. Unknown or unclear objects stay pending and are not saved as confirmed disposals. Edits update only the selected item; removing a non-waste detection removes its current group entry from history. Objects outside the 20-item catalog require campus guidance. Very crowded scenes are explicitly marked incomplete. The mixed pile demo exercises this without a key; live accuracy depends on the provider and photo quality.
+Greenfield Campus is fictional. No real local guide was supplied. `dist/catalog.js` contains a clearly labeled sample guide and 20 supported common items; replace it with approved local policy before real use. The app scans up to 30 visible object groups. Hidden or unsupported objects stay uncertain. Clear supported results receive exact guide passages and save automatically; corrections update only the relevant entry. Use **Try a mixed pile demo** to test without an API key.
+
+The backend limits image request size and applies a basic per-instance request limit. This is a prototype limit, not a distributed production quota system.

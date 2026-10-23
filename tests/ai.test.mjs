@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {providers,requestFor,detectItem} from '../dist/ai.js';
+import {providers,requestFor,detectItem} from '../lib/provider.js';
 const config={provider:'apinex',key:'test-key',model:'gemini/3.8-flash',prompt:'Identify this',photo:{data:'data:image/png;base64,YQ==',mime:'image/png'}};
 test('Apinex sends multimodal chat with provider-specific authentication',()=>{const r=requestFor(config);assert.equal(r.url,'https://api.apinex.bond/v1/chat/completions');assert.equal(r.options.headers.Authorization,'Bearer test-key');const b=JSON.parse(r.options.body);assert.equal(b.model,config.model);assert.equal(b.messages[0].content[1].image_url.url,config.photo.data);assert.ok(!r.options.headers['x-goog-api-key']);});
 test('Google sends native Gemini image parts with its own authentication',()=>{const r=requestFor({...config,provider:'google',model:'gemini-3.8-flash'});const b=JSON.parse(r.options.body);assert.equal(r.options.headers['x-goog-api-key'],'test-key');assert.equal(b.contents[0].parts[1].inline_data.data,'YQ==');assert.ok(!r.options.headers.Authorization);});
