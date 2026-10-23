@@ -10,6 +10,6 @@ export async function loadWasteModel(){if(pending)return pending;pending=(async(
  const model=await tf.loadGraphModel(BASE+'model.json');
  return {name:'Trash AI · 60 litter classes',async detect(canvas){
  const input=tf.tidy(()=>tf.image.resizeBilinear(tf.browser.fromPixels(canvas),[640,640]).div(255).expandDims(0));let outputs;
- try{outputs=await model.executeAsync(input,['Identity','Identity_1','Identity_2','Identity_3']);const [boxes,scores,classes,count]=await Promise.all(outputs.map(t=>t.data()));const results=[];for(let i=0;i<Math.min(count[0],scores.length);i++){if(scores[i]<.58)continue;const [x1,y1,x2,y2]=boxes.slice(i*4,i*4+4);results.push({class:labels[Math.round(classes[i])]||'',score:scores[i],bbox:[x1*canvas.width,y1*canvas.height,(x2-x1)*canvas.width,(y2-y1)*canvas.height]});}return results;}finally{input.dispose();if(outputs)tf.dispose(outputs);}
+ try{outputs=await model.executeAsync(input,['Identity','Identity_1','Identity_2','Identity_3']);const [boxes,scores,classes,count]=await Promise.all(outputs.map(t=>t.data()));const results=[];for(let i=0;i<Math.min(count[0],scores.length);i++){if(scores[i]<.30)continue;const [x1,y1,x2,y2]=boxes.slice(i*4,i*4+4);results.push({class:labels[Math.round(classes[i])]||'',score:scores[i],bbox:[x1*canvas.width,y1*canvas.height,(x2-x1)*canvas.width,(y2-y1)*canvas.height]});}return results;}finally{input.dispose();if(outputs)tf.dispose(outputs);}
  }};
  })().catch(e=>{pending=null;throw e;});return pending;}

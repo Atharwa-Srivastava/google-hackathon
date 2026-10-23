@@ -45,6 +45,10 @@ export const ITEM_CLASSIFICATIONS={
  'pizza box':{category:'CHECK',label:'Pizza box · check grease'},'broken glass':{category:'CHECK',label:'Broken glass · ask facilities'},'other plastic':{category:'CHECK',label:'Plastic · verify type'},'unlabeled litter':{category:'CHECK',label:'Waste · verify material'},'aerosol':{category:'CHECK',label:'Aerosol · ask facilities'},'styrofoam piece':{category:'CHECK',label:'Foam · guide check'},'aluminium foil':{category:'CHECK',label:'Foil · guide check'},'paper bag':{category:'CHECK',label:'Paper bag · guide check'},'cigarette':{category:'CHECK',label:'Cigarette · guide check'}
 };
 WASTE_CATEGORIES.GLASS={name:'Glass collection',bin:'Glass collection',dustbin:'Glass collection',color:'#a78bfa',icon:'🟣',glow:'transparent',note:'Sample guide R4: empty and rinse bottles or jars; separate lids.'};
+// Recognize the remaining litter classes without inventing disposal guidance.
+for(const raw of ['meal carton','other carton','pop tab','glass cup','disposable food container','toilet tube','egg carton','plastic straw','disposable plastic cup','plastic utensils','squeezable tube','spread tub','garbage bag','six pack rings','foam cup','paper straw','aluminium blister pack','rope & strings','other plastic container','scrap metal','plastic glooves','wrapping paper','carded blister pack','foam food container','other plastic cup','metal bottle cap']){
+ ITEM_CLASSIFICATIONS[raw]={category:'CHECK',label:raw.charAt(0).toUpperCase()+raw.slice(1)};
+}
 WASTE_CATEGORIES.CHECK={name:'Needs confirmation',bin:'Check local guide',dustbin:'Guide check',color:'#94a3b8',icon:'⚪',glow:'transparent',note:'Material detected; disposal is not confirmed by the guide.'};
 WASTE_CATEGORIES.WET.dustbin='Biodegradable';WASTE_CATEGORIES.DRY_RECYCLABLE.dustbin='Dry recycling';WASTE_CATEGORIES.GENERAL.dustbin='General waste';WASTE_CATEGORIES.HAZARDOUS.dustbin='Special collection';
 

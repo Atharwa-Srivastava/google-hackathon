@@ -16,9 +16,9 @@ export function initLiveScan({navigate,isReady,onCount}){
    canvas,
    onDetect:(detected)=>{
     if(stream&&engine?.scan.status==='scanning'){
-     $('#liveNow').textContent=detected.length?detected.map(d=>d.label+' · '+d.dustbin).join(' | '):'No supported waste visible';
+     $('#liveNow').textContent=detected.length?detected.map(d=>(d.uncertain?'Possible ':'')+d.label+' · '+d.dustbin).join(' | '):'No supported waste visible';
      const catalogMap={'clear plastic bottle':'Plastic bottle','other plastic bottle':'Plastic bottle','glass bottle':'Glass bottle','glass jar':'Glass jar','drink can':'Drink can','food can':'Food tin','paper cup':'Coffee cup','drink carton':'Drink carton','crisp packet':'Snack wrapper','plastic film':'Plastic bag','single-use carrier bag':'Plastic bag','plastic lid':'Plastic lid','battery':'Battery'};
-     if(detected.length){const grouped=new Map();for(const d of detected){const key=catalogMap[d.rawClass]||d.label;const item=items.find(i=>i.name===catalogMap[d.rawClass]);const old=grouped.get(key);grouped.set(key,{item:item?.name||null,label:d.label,ruleId:item?.rule||null,certain:!!item,quantity:(old?.quantity||0)+1});}engine.scan.entries=mergeObservations(engine.scan.entries,{items:[...grouped.values()]},engine.scan.dismissed);engine.checkpoint();}
+     if(detected.length){const grouped=new Map();for(const d of detected){const key=catalogMap[d.rawClass]||d.label;const item=items.find(i=>i.name===catalogMap[d.rawClass]);const old=grouped.get(key);grouped.set(key,{item:item?.name||null,label:d.label,ruleId:item?.rule||null,certain:!!item&&!d.uncertain,quantity:(old?.quantity||0)+1});}engine.scan.entries=mergeObservations(engine.scan.entries,{items:[...grouped.values()]},engine.scan.dismissed);engine.checkpoint();}
      if(detected.length>0){
       if(detected.length!==lastTagCount){
        $('#liveState').textContent=`AR: ${detected.length} item${detected.length>1?'s':''} tagged`;

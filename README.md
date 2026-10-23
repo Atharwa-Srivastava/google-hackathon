@@ -36,8 +36,8 @@ The backend limits image request size and applies a basic per-instance request l
 
 ## Live camera scans & Real-Time AR HUD
 
-Choose **Live scan**, then **Start scan** and allow camera access. The app activates an in-browser **Real-Time AR HUD (30+ FPS)**:
-- **Instant Object Identification:** Common household waste items (fruits, bottles, cans, cups, boxes, cutlery, electronics) are identified within ~25–35ms directly on device using client-side WebGL acceleration.
+Choose **Live scan**, then **Start scan** and allow camera access. The app activates an in-browser **live waste overlay**:
+- **Instant Object Identification:** Supported litter classes are detected on-device using WebGL. Detection starts after model download and warm-up; actual speed varies by device.
 - **Dustbin Reticles & Floating Tags:** Renders a color-coded bounding box and a floating pill tag indicating the waste type and bin destination:
   - 🟢 **Wet / Biodegradable Waste** (`#22c55e`) → Green Food Waste Bin
   - 🔵 **Dry Recyclable Waste** (`#3b82f6`) → Blue Recycling Bin
@@ -46,7 +46,7 @@ Choose **Live scan**, then **Start scan** and allow camera access. The app activ
 - **Dynamic Tracking & Exit Handling:** The tag smoothly tracks moving objects using exponential smoothing. As an item leaves the camera frame or is dropped into a bin, the tag is hidden on the next missing detection or after a short stale timeout.
 - **Hybrid AI Fallback & Training Readiness:**
   - If an item is uncataloged or ambiguous, the live scan continues to capture snapshots for Gemini AI multi-item verification when you tap **Finish scan**.
-  - Drop-in architecture ready for custom-trained **Google Teachable Machine** models (`model.json` + `weights.bin`) in `dist/`.
+  - Unsupported disposal rules receive a neutral Guide check label.
 
 The live list is provisional. Each entry uses the largest observed count, not a sum across views; counts remain estimates. One scan should cover one waste pile. Finish stops the camera immediately, waits for any active analysis, then reconciles the first and seven most recent snapshots with earlier observations. Up to 30 groups are retained; hidden or unsupported objects remain uncertain. Corrections and removals persist across further analyses.
 
@@ -58,4 +58,6 @@ The same server endpoint accepts optional `mode: live-frame` with one `photo`, o
 
 ## Local waste tracking
 The AR overlay uses the MIT-licensed Trash AI YOLOv5/TACO graph (opensacorg/trash-ai, revision a11de7cb60bfb21399f64c57e48384a61a5044f7), loaded on-device through TensorFlow.js 4.22.0. Attribution and license: licenses/trash-ai-MIT.txt. First use downloads approximately 29 MB of weights from the pinned upstream repository; camera images are not sent there. This is a 60-class litter detector, not a universal waste recognizer. People, hands, furniture and normal objects have no permitted tag mapping. Unknown or unsupported disposal classes remain neutral. No model can guarantee zero false positives.
-Tags use stable per-object IDs, spatial matching, two-hit confirmation, time-based smoothing, object-fit cover projection, immediate hiding on missing detections, and stale expiry. Camera capture requests 60 FPS where supported; overlay redraw targets the display refresh rate. Actual inference/display rates depend on hardware and are shown live. Inference is independent of the eight-second cloud verification and saved-photo sampling. Tags follow only currently visible detections; history preserves earlier discoveries.
+Tags use stable per-object IDs, spatial matching, first-response tags, time-based smoothing, object-fit cover projection, immediate hiding on missing detections, and stale expiry. Camera capture requests 60 FPS where supported; overlay redraw targets the display refresh rate. Actual inference/display rates depend on hardware and are shown live. Inference is independent of the eight-second cloud verification and saved-photo sampling. Tags follow only currently visible detections; history preserves earlier discoveries.
+
+Tag sensitivity accepts model scores from 0.30; scores below 0.55 are labeled Possible and remain uncertain in saved observations. Tags persist between slower checks for an adaptive 1.2–3 seconds, but clear immediately on an empty response. Remaining packaging classes receive neutral guide-check tags instead of being silently discarded. Run the local fixture and open /model-probe for real upstream litter photographs with the actual model and video-overlay pipeline (no mocked detections).
