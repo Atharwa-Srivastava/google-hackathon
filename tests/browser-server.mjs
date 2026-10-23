@@ -1,0 +1,5 @@
+// Local-only deterministic camera/AI fixtures. Never included in the hosted build.
+import http from 'node:http';
+import {readFile} from 'node:fs/promises';
+const files=['index.html','style.css','app.js','ai.js','batch.js','catalog.js','live.js','live-core.js','live-store.js','live-session.js','live-capture.js'];
+http.createServer(async(req,res)=>{const path=new URL(req.url,'http://localhost').pathname;try{if(path==='/mock.js'){res.setHeader('Content-Type','text/javascript');res.end(await readFile(new URL('./mock-camera.js',import.meta.url)));return;}const file=path==='/'?'index.html':path.slice(1);if(!files.includes(file)){res.writeHead(404);res.end();return;}let data=await readFile(new URL('../dist/'+file,import.meta.url),'utf8');if(file==='index.html')data=data.replace('<script type="module" src="app.js">','<script src="/mock.js"></script><script type="module" src="app.js">');res.setHeader('Content-Type',file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'text/javascript');res.end(data);}catch{res.writeHead(500);res.end();}}).listen(4174,'127.0.0.1',()=>console.log('Synthetic live-scan fixture at http://127.0.0.1:4174'));
