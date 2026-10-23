@@ -53,7 +53,13 @@ async function run(pixels,frame){
  const target=selectDlcTarget(detections,human);
  let materialPixels=pixels;
  if(target){context.putImageData(new ImageData(pixels,224,224),0,0);const [x,y,w,h]=target.bbox,pad=.12*Math.max(w,h),left=Math.max(0,x-pad),top=Math.max(0,y-pad),right=Math.min(1,x+w+pad),bottom=Math.min(1,y+h+pad),crop=new OffscreenCanvas(224,224),ctx=crop.getContext('2d');ctx.drawImage(context.canvas,left*224,top*224,(right-left)*224,(bottom-top)*224,0,0,224,224);materialPixels=ctx.getImageData(0,0,224,224).data;}
- const prediction=await predict(materialPixels),decision=resolveDlcScene(prediction,target,human);
+ let prediction=await predict(materialPixels),decision=resolveDlcScene(prediction,target,human);
+ // Tight crops can remove a can's identifying rim. With no human present,
+ // retain the wider material view only if it independently verifies acceptance.
+ if(target&&!human.faces.length&&!human.palms.length&&decision.state==='checking'){
+  const wider=await predict(pixels),verified=resolveDlcScene(wider,target,human);
+  if(verified.state==='accept'&&wider.confidence>prediction.confidence){prediction=wider;decision=verified;}
+ }
  if(!packagingReady&&decision.state==='accept')return {prediction,detections,human,decision:{state:'checking',label:'Waste verification preparing',reason:'Camera is live. Do not drop until a green decision appears.',rule:''}};
  return {prediction,detections,human,candidate:decision.state!=='idle'&&prediction.confidence>=.75&&prediction.margin>=.2&&prediction.similarity>=prediction.minSimilarity,decision};
 }
