@@ -25,3 +25,7 @@ Greenfield Campus is fictional. No real local guide was supplied. `dist/catalog.
 5. Correct identification and save; reload and review My history.
 
 API reference: https://ai.google.dev/api/generate-content
+
+## AI providers and automatic history
+AI settings supports Apinex at https://api.apinex.bond/v1/chat/completions (default editable model gemini/3.8-flash) and direct Google Gemini (default editable model gemini-3.8-flash). Enter the exact model ID available in your provider account. Free access is determined by the provider. Keys are held separately in tab memory and never stored in history. Browser requests require provider CORS support. No live provider calls were verified without a key.
+Successful identifications save automatically, including demo results. Corrections replace the current history entry; reviewing an entry does not create a duplicate. Unresolved questions and failed requests are not saved as completed disposals.
