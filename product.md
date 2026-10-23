@@ -250,7 +250,7 @@ The household finishes with one understandable record: what was identified, how 
 
 ## 13. AI and dataset approach
 
-The current app uses existing trained browser models for supported litter and household detections, visual tracking between detections, and Gemini for broader image understanding. Server-side prompts connect identified items to the supplied guide. The 141-item knowledge catalog helps recognition and corrections; it is not a set of 141 newly trained camera classes.
+The current app uses existing trained browser models for supported litter and household detections, visual tracking between detections, and Gemini for broader image understanding. Server-side prompts connect identified items to the supplied guide. The 141-item knowledge catalog helps recognition and corrections; it is not a set of 141 newly trained camera classes. The interactive prototype includes a curated 8-class benchmark dataset demonstration tray featuring plastic, metal, cardboard, paper, biological waste, battery, glass, and fabric/clothes.
 
 The user has also identified a separate ZIP dataset described as containing ten categories: metal, glass, biological waste, paper, battery, trash, cardboard, shoes, clothes, and plastic. Its complete contents and any trained model files still need inspection before this document can claim that dataset has been integrated or used for training. The screenshot's stated total and listed class counts also need reconciliation against the actual files.
 

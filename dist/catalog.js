@@ -30,7 +30,7 @@ const additions = [
 ['E-waste and batteries','Light bulb / special waste','R8',`LED bulb|CFL bulb|Incandescent bulb`],
 ['Other household items','Not covered by the sample collection guide',null,`Coffee grounds|Dry leaves|Untreated wood chips|Cooked rice|Meat scraps|Dairy leftovers|Compostable bag|Broken glass|Ceramic mug|Old clothes|Shoes|Polystyrene packaging|Aluminium foil|Paint container|Medicine blister pack|Printer ink cartridge|Refrigerator|Washing machine|Television|Used cooking oil`]
 ];
-for(const [family,material,rule,names] of additions)for(const name of names.split('|'))items.push({name,material,rule,family,keywords:name.toLowerCase()});
+for(const [family,material,rule,names] of additions)for(const name of names.split('|'))items.push({name,material,rule,family,keywords:name.toLowerCase() + (name==='Old clothes'?' fabric textile clothes cloth denim':'')});
 for(const item of items){
  item.family ||= item.rule==='R5'?'Food scraps':item.rule==='R8'?'E-waste and batteries':item.rule==='R2'?'Paper and cardboard':item.rule==='R1'?'Plastic packaging':item.rule==='R3'||item.rule==='R4'?'Metal and glass':'Mixed packaging';
  item.compost = item.rule==='R5'||item.name==='Coffee grounds'?'green':['Dry leaves','Untreated wood chips'].includes(item.name)?'brown':null;

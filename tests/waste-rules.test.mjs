@@ -22,6 +22,16 @@ test('classifies recyclable bottles and cans into dry / blue bin', () => {
   const can = classifyWasteObject('drink can');
   assert.equal(can.recognized, true);
   assert.equal(can.dustbin, 'Dry recycling');
+
+  const paper = classifyWasteObject('paper');
+  assert.equal(paper.recognized, true);
+  assert.equal(paper.category, WASTE_CATEGORIES.DRY_RECYCLABLE.name);
+  assert.equal(paper.dustbin, 'Dry recycling');
+
+  const cardboard = classifyWasteObject('cardboard box');
+  assert.equal(cardboard.recognized, true);
+  assert.equal(cardboard.category, WASTE_CATEGORIES.DRY_RECYCLABLE.name);
+  assert.equal(cardboard.dustbin, 'Dry recycling');
 });
 
 test('classifies electronic items into special hazardous collection', () => {
@@ -42,6 +52,18 @@ test('handles case insensitivity and whitespace', () => {
   const res = classifyWasteObject('  FoOd WaStE  ');
   assert.equal(res.recognized, true);
   assert.equal(res.category, WASTE_CATEGORIES.WET.name);
+});
+
+test('classifies fabric and textiles into check local guide category', () => {
+  const fabric = classifyWasteObject('fabric');
+  assert.equal(fabric.recognized, true);
+  assert.equal(fabric.category, WASTE_CATEGORIES.CHECK.name);
+  assert.equal(fabric.dustbin, 'Guide check');
+  assert.equal(fabric.catalog, 'Old clothes');
+
+  const clothes = classifyWasteObject('clothes');
+  assert.equal(clothes.recognized, true);
+  assert.equal(clothes.catalog, 'Old clothes');
 });
 
 test('strictly rejects persons, furniture, animals and background objects', () => {

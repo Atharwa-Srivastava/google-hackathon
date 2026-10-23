@@ -84,7 +84,15 @@ Object.assign(ITEM_CLASSIFICATIONS,{
  'food scraps':{category:'WET',label:'Wet waste · Food scraps',catalog:'Vegetable scraps'},
  'fruit scraps':{category:'WET',label:'Wet waste · Fruit peels',catalog:'Banana peel'},
  'bread':{category:'WET',label:'Bread / food waste · Wet waste',catalog:'Vegetable scraps'},
- 'rice':{category:'WET',label:'Rice / leftovers · Wet waste',catalog:'Vegetable scraps'}
+ 'rice':{category:'WET',label:'Rice / leftovers · Wet waste',catalog:'Vegetable scraps'},
+ 'fabric':{category:'CHECK',label:'Fabric / Textile · Check guide',catalog:'Old clothes',family:'textile',tip:'Fabrics and clothes are not accepted in standard dry recycling. Donate clean textiles or use designated clothing bins.'},
+ 'textile':{category:'CHECK',label:'Textile / Fabric · Check guide',catalog:'Old clothes',family:'textile',tip:'Fabrics and clothes are not accepted in standard dry recycling. Donate clean textiles or use designated clothing bins.'},
+ 'clothes':{category:'CHECK',label:'Old clothes · Check guide',catalog:'Old clothes',family:'textile',tip:'Clean clothes can be donated or taken to a dedicated textile drop-off.'},
+ 'clothing':{category:'CHECK',label:'Clothing · Check guide',catalog:'Old clothes',family:'textile',tip:'Clean clothes can be donated or taken to a dedicated textile drop-off.'},
+ 'cardboard box':{category:'DRY_RECYCLABLE',label:'Cardboard box · Dry recycling',catalog:'Cardboard box',family:'cardboard',tip:'Flatten cardboard box. Ensure no greasy or food-soiled sections go into dry recycling.'},
+ 'clean cardboard':{category:'DRY_RECYCLABLE',label:'Clean cardboard · Dry recycling',catalog:'Cardboard box',family:'cardboard',tip:'Flatten clean cardboard and put in dry recycling.'},
+ 'newspaper':{category:'DRY_RECYCLABLE',label:'Newspaper · Dry recycling',catalog:'Newspaper',family:'paper',tip:'Clean, dry newspaper and paper sheets go into dry recycling.'},
+ 'clean paper':{category:'DRY_RECYCLABLE',label:'Clean paper · Dry recycling',catalog:'Newspaper',family:'paper',tip:'Clean, dry paper goes in dry recycling.'}
 });
 for(const raw of ['normal paper','magazine paper','corrugated carton'])ITEM_CLASSIFICATIONS[raw].tip='Clean, dry paper and cardboard go in dry recycling. Flatten boxes. Separate greasy or food-soiled sections into general waste.';
 for(const food of ['banana','apple','orange','broccoli','carrot','sandwich','hot dog','donut','cake'])ITEM_CLASSIFICATIONS[food]={category:'WET',label:food[0].toUpperCase()+food.slice(1)+' · Wet Waste',family:food,uncertain:true,tip:'Food detected. Confirm it is discarded food or scraps before sorting. Remove packaging.'};

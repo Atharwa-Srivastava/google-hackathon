@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WasteWise — Official 2m 15s Interactive Brag Reel</title>
+  <!-- Tailwind CSS via allowlisted gstatic -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    :root {
+      --bg: #050806;
+      --card: rgba(12, 20, 16, 0.75);
+      --card-border: rgba(34, 197, 94, 0.2);
+      --primary: #10b981;
+      --primary-glow: rgba(16, 185, 129, 0.4);
+      --cyan: #06b6d4;
+      --gold: #f59e0b;
+      --crimson: #ef4444;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: #f1f5f9;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Glassmorphism effects */
+    .glass-panel {
+      background: rgba(13, 23, 18, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(16, 185, 129, 0.18);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-card-hover {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(16, 185, 129, 0.45);
+      box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Custom glowing scan line */
+    @keyframes scanline {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 0.8; }
+      100% { transform: translateY(500%); opacity: 0; }
+    }
+    .scanner-line {
+      animation: scanline 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Glowing pulse animation */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.7); }
+    }
+    .animate-pulse-glow {
+      animation: pulse-glow 2.5s infinite;
+    }
+
+    /* Reticle target animation */
+    @keyframes target-ping {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+    .reticle-ping {
+      animation: target-ping 2s ease-in-out infinite;
+    }
+
+    /* Custom scrollbar for teleprompter */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(16, 185, 129, 0.6);
+    }
+  </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between relative bg-[#040705] text-slate-100 antialiased overflow-hidden">
+
+  <!-- Background Canvas for Ambient Cyber-Eco Particle Grid -->
+  <canvas id="ambient-canvas" class="absolute inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+  <!-- Top Ambient Navigation Bar -->
+  <header class="relative z-20 w-full px-6 py-3 flex items-center justify-between border-b border-emerald-950/60 bg-black/40 backdrop-blur-md">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-[1px] shadow-lg shadow-emerald-500/20">
+        <div class="w-full h-full bg-[#07130e] rounded-xl flex items-center justify-center">
+          <span class="text-emerald-400 font-extrabold text-lg">🌱</span>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
+            WasteWise <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono-code font-semibold border border-emerald-500/30">BRAG REEL</span>
+          </span>
+          <span class="inline-flex items-center gap-1 text-[11px] font-mono-code text-emerald-400/80 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 02:15 MASTER CUT
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400 font-medium">A little clarity. A greener community. • Google Hackathon Edition</p>
+      </div>
+    </div>
+
+    <!-- Act Quick Switcher Pills -->
+    <div class="hidden lg:flex items-center gap-1.5 bg-black/50 p-1 rounded-full border border-emerald-900/40" id="act-pills">
+      <!-- Injected by JavaScript -->
+    </div>
+
+    <!-- Right Utility Controls -->
+    <div class="flex items-center gap-3">
+      <button id="sound-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/40 text-xs font-mono-code flex items-center gap-1.5 transition">
+        <span id="sound-icon">🔊</span> <span id="sound-label">SFX: ON</span>
+      </button>
+      <button id="fullscreen-btn" onclick="toggleFullscreen()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-xs font-mono-code flex items-center gap-1.5 transition">
+        <span>⛶</span> FULLSCREEN
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Split-Screen Reel Stage (Left: Narrative / Teleprompter | Right: Interactive UI & AR Engine) -->
+  <main class="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 overflow-hidden max-w-[1920px] mx-auto w-full">
+
+    <!-- LEFT SCREEN: Narrative, Voiceover Teleprompter, Metrics & Tech Stack (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col justify-between h-full space-y-4">
+
+      <!-- Act Title & Narrative Header Card -->
+      <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+        <div class="absolute -right-16 -top-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex items-center justify-between mb-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-mono-code font-semibold tracking-wider" id="act-badge">
+            ACT I OF VI • THE UNSEEN CRISIS
+          </div>
+          <span class="text-xs font-mono-code text-slate-400" id="act-timestamp-label">00:00 - 00:20</span>
+        </div>
+
+        <h1 class="text-2xl xl:text-3xl font-extrabold text-white tracking-tight leading-tight mb-2" id="scene-heading">
+          The $80 Billion Sorting Crisis
+        </h1>
+        <p class="text-sm xl:text-base text-slate-300/90 leading-relaxed font-normal" id="scene-subhead">
+          Every day, billions of recyclable items are condemned to landfills. Not from apathy, but because modern packaging rules are impossibly confusing.
+        </p>
+
+        <!-- Dynamic Stat Gauges for the Active Act -->
+        <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-emerald-900/40" id="stat-gauges">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Live Voiceover Teleprompter & Pitch Script Card -->
+      <div class="glass-panel rounded-2xl p-5 flex-1 flex flex-col justify-between overflow-hidden border-emerald-800/30">
+        <div class="flex items-center justify-between pb-2 border-b border-emerald-950/80 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="text-xs font-mono-code uppercase font-semibold text-emerald-400 tracking-wider">Synchronized Pitch Voiceover</span>
+          </div>
+          <span class="text-[11px] font-mono-code text-slate-400 bg-black/40 px-2 py-0.5 rounded border border-slate-800">
+            SPEAKER PACE: 135 WPM
+          </span>
+        </div>
+
+        <!-- Teleprompter Karaoke Text Display -->
+        <div class="flex-1 overflow-y-auto pr-2 space-y-3" id="teleprompter-box">
+          <p class="text-base xl:text-lg font-medium text-slate-200 leading-relaxed transition-all duration-300" id="teleprompter-text">
+            Loading act speech lines...
+          </p>
+        </div>
+
+        <!-- Live Architecture / Innovation Highlights -->
+        <div class="mt-3 pt-3 border-t border-emerald-950 flex flex-wrap items-center gap-1.5" id="tech-pills">
+          <!-- Tech pills injected dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT SCREEN: Interactive Live Product Showcase & AR HUD Simulator (7 Cols) -->
+    <section class="lg:col-span-7 h-full flex flex-col">
+      <div class="glass-panel rounded-2xl p-1 flex-1 flex flex-col overflow-hidden relative border-emerald-700/30 shadow-2xl">
+
+        <!-- Mock Device / Scanner Viewport Header -->
+        <div class="px-4 py-2.5 bg-black/60 border-b border-emerald-950 flex items-center justify-between text-xs font-mono-code">
+          <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+            </div>
+            <span class="text-slate-400 pl-2 border-l border-slate-800 flex items-center gap-1">
+              <span class="text-emerald-400">●</span> <span id="hud-mode-title">AR HUD RADAR: 60 FPS ACTIVE</span>
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4 text-slate-400">
+            <span class="hidden sm:inline">INFERENCE: <strong class="text-emerald-400" id="hud-latency">14.2ms</strong></span>
+            <span>FPS: <strong class="text-emerald-400" id="hud-fps">59.8</strong></span>
+            <span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/40 text-[10px]">
+              GEMINI 3.8 FLASH
+            </span>
+          </div>
+        </div>
+
+        <!-- Dynamic Visual Display Container (Morphs depending on Act 1 through 6) -->
+        <div class="relative flex-1 w-full h-full bg-[#060c09] overflow-hidden flex items-center justify-center p-4" id="visual-stage">
+          <!-- Act Stages are rendered and toggled dynamically by JavaScript -->
+        </div>
+
+        <!-- Viewport Bottom Status Bar -->
+        <div class="px-4 py-2 bg-black/80 border-t border-emerald-950/80 flex items-center justify-between text-[11px] font-mono-code text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+            <span id="hud-status-text">Object Tracking: 4 targets locked • Guide: Greenfield Campus Rule R1-R8</span>
+          </div>
+          <div class="flex items-center gap-2 text-emerald-400/80">
+            <span>ZERO CLOUD STORAGE</span> • <span>IndexedDB LOCAL</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Master Reel Scrubber & Playback Controls Bar -->
+  <footer class="relative z-20 w-full px-6 py-3.5 bg-black/80 backdrop-blur-xl border-t border-emerald-950/80">
+    <div class="max-w-[1920px] mx-auto flex flex-col space-y-2">
+
+      <!-- Timeline Scrubber Bar with Chapter Flags -->
+      <div class="relative w-full group">
+        <!-- Chapter Marker Labels -->
+        <div class="relative w-full h-2 bg-slate-900 rounded-full overflow-hidden cursor-pointer" id="scrubber-track" onclick="handleScrubberClick(event)">
+          <div id="scrubber-progress" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-full transition-all duration-75 relative" style="width: 0%;">
+            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-lg shadow-emerald-400/50 scale-100 group-hover:scale-125 transition"></div>
+          </div>
+        </div>
+
+        <!-- Chapter Notch Points at exact seconds -->
+        <div class="flex justify-between text-[10px] font-mono-code text-slate-500 mt-1 px-1 select-none">
+          <span class="cursor-pointer hover:text-emerald-400 transition" onclick="jumpToSecond(0)">00:00 (Dilemma)</span>
+          <span class="cursor-pointer hover:text-emerald-400 transition" onclick="jumpToSecond(20)">00:20 (Breakthrough)</span>
+          <span class="cursor-pointer hover:text-emerald-400 transition" onclick="jumpToSecond(45)">00:45 (AR HUD)</span>
+          <span class="cursor-pointer hover:text-emerald-400 transition" onclick="jumpToSecond(70)">01:10 (Compost)</span>
+          <span class="cursor-pointer hover:text-emerald-400 transition" onclick="jumpToSecond(90)">01:30 (Eco-Wallet)</span>
+          <span class="cursor-pointer hover:text-emerald-400 transition" onclick="jumpToSecond(115)">01:55 (Impact)</span>
+          <span class="text-emerald-400/80">02:15 (Finish)</span>
+        </div>
+      </div>
+
+      <!-- Controls Row: Play/Pause, Skip, Time Display, Speed, Replay -->
+      <div class="flex items-center justify-between pt-1">
+        
+        <!-- Left: Playback Buttons -->
+        <div class="flex items-center gap-3">
+          <button onclick="stepAct(-1)" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" title="Previous Act">
+            ⏮
+          </button>
+          
+          <button id="play-pause-btn" onclick="togglePlay()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition scale-100 active:scale-95">
+            <span id="play-icon">▶</span> <span id="play-label">START REEL</span>
+          </button>
+
+          <button onclick="stepAct(1)" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition" title="Next Act">
+            ⏭
+          </button>
+
+          <button onclick="resetReel()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs font-mono-code transition" title="Restart from 00:00">
+            ↺ RESTART
+          </button>
+        </div>
+
+        <!-- Center: Master Time Readout (135 Seconds Max) -->
+        <div class="flex items-center gap-2 font-mono-code">
+          <span class="text-xl font-bold text-emerald-400 tracking-wider" id="time-current">00:00.0</span>
+          <span class="text-slate-600 text-sm">/</span>
+          <span class="text-slate-400 text-sm font-semibold">02:15.0</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-900/40 ml-2" id="time-remaining">-02:15</span>
+        </div>
+
+        <!-- Right: Speed Selector & Interactive Demo Launch -->
+        <div class="flex items-center gap-2">
+          <div class="flex items-center bg-black/60 rounded-lg p-0.5 border border-slate-800 text-xs font-mono-code">
+            <button class="px-2.5 py-1 rounded speed-pill bg-emerald-500 text-black font-bold" onclick="setSpeed(1.0, this)">1.0x</button>
+            <button class="px-2.5 py-1 rounded speed-pill text-slate-400 hover:text-white" onclick="setSpeed(1.25, this)">1.25x</button>
+            <button class="px-2.5 py-1 rounded speed-pill text-slate-400 hover:text-white" onclick="setSpeed(1.5, this)">1.5x</button>
+          </div>
+
+          <a href="index.html" target="_blank" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition">
+            <span>🚀</span> Launch Full App
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- SCRIPT ENGINE: Reel State Machine, Timers, Synthesized Audio, Interactive Stage Renderers -->
+  <script>
+    /* =========================================================================
+       1. ACT DEFINITIONS & TIMESTAMPS (Total 135 Seconds = 02:15)
+       ========================================================================= */
+    const REEL_DURATION = 135.0; // 2 minutes 15 seconds
+
+    const ACTS = [
+      {
+        id: 0,
+        roman: "ACT I",
+        title: "The Unseen Crisis",
+        badge: "ACT I OF VI • THE UNSEEN CRISIS",
+        start: 0.0,
+        end: 20.0,
+        heading: "The $80 Billion Sorting Crisis",
+        subhead: "Every single day, well-intentioned people stand before rows of bins, completely baffled. Microscopic resin triangles and conflicting local rules cause massive contamination.",
+        stats: [
+          { value: "$80.4B", label: "Annual Waste Loss" },
+          { value: "73%", label: "Citizens Confused" },
+          { value: "1 in 3", label: "Batches Rejected" }
+        ],
+        pills: ["Contamination Penalty", "Microscopic Symbols", "Hazardous E-Waste Risks", "Landfill Overflow"],
+        speech: [
+          "Every single day, well-intentioned people stand before a row of bins, completely baffled.",
+          "Is this greasy pizza box recyclable? Does this paper cup have a hidden plastic lining? Where on earth do batteries go?",
+          "Because of conflicting symbols and local rules, over eighty billion dollars of recyclable material is condemned to landfills every year.",
+          "Sorting waste shouldn't require an environmental science degree."
+        ],
+        mode: "CHAOS_SIMULATOR"
+      },
+      {
+        id: 1,
+        roman: "ACT II",
+        title: "The AI Vision",
+        badge: "ACT II OF VI • THE MULTIMODAL BREAKTHROUGH",
+        start: 20.0,
+        end: 45.0,
+        heading: "Meet WasteWise: Clarity at Sight",
+        subhead: "Transform any smartphone into a real-time waste classification radar. Powered by on-device 60 FPS neural detection and Gemini 3.8 Flash multimodal reasoning.",
+        stats: [
+          { value: "60 FPS", label: "On-Device Speed" },
+          { value: "8 Sec", label: "Gemini Cadence" },
+          { value: "100%", label: "Client-Side Privacy" }
+        ],
+        pills: ["TensorFlow.js 4.22", "YOLOv5 TACO 60-Class", "COCO-SSD MobileNet", "Gemini 3.8 Flash Adapter"],
+        speech: [
+          "Meet WasteWise. The intelligent eco-copilot that transforms any smartphone into a real-time waste classification radar.",
+          "Powered by a hybrid on-device neural network running at up to sixty frames per second—backed by Google's Gemini 3.8 Flash for deep multimodal scene reasoning...",
+          "WasteWise doesn't just guess what something is. It instantly deconstructs the scene, highlights every object, and tells you exactly what to do."
+        ],
+        mode: "HERO_SCANNER_VIEW"
+      },
+      {
+        id: 2,
+        roman: "ACT III",
+        title: "AR HUD & Separation",
+        badge: "ACT III OF VI • COMPONENT SEPARATION ENGINE",
+        start: 45.0,
+        end: 70.0,
+        heading: "Don't Guess. Deconstruct.",
+        subhead: "Composite packaging is the #1 enemy of recycling facilities. WasteWise breaks complex items into distinct material streams with zero hallucinations.",
+        stats: [
+          { value: "141 Items", label: "Knowledge Catalog" },
+          { value: "34 Types", label: "E-Waste & Batteries" },
+          { value: "4 Bins", label: "Standardized Matrix" }
+        ],
+        pills: ["Component Deconstruction", "Pizza Box Split", "Fabric & Textile Donation", "Coffee Cup Lined/Lid", "Greenfield Campus Rule R1-R8"],
+        speech: [
+          "Most everyday trash items are composite materials that ruin entire recycling batches when tossed together.",
+          "WasteWise solves this with our automated Component Separation Engine.",
+          "Take a morning coffee cup: WasteWise tells you to pop the rigid plastic lid into dry recycling, while directing the lined paper cup into general waste.",
+          "For pizza boxes, it separates clean cardboard from greasy bases. And for dangerous lithium batteries, it isolates them instantly with clear drop-off protocols."
+        ],
+        mode: "COMPONENT_SEPARATION"
+      },
+      {
+        id: 3,
+        roman: "ACT IV",
+        title: "Circular Composting",
+        badge: "ACT IV OF VI • CIRCULAR RESOURCE RECOVERY",
+        start: 70.0,
+        end: 90.0,
+        heading: "Scraps Become Capital: Circular Soil",
+        subhead: "Organic waste isn't garbage—it's fertile soil in waiting. EPA-backed home composting ratios combined with strict honest AI uncertainty.",
+        stats: [
+          { value: "3:1 Ratio", label: "Browns to Greens" },
+          { value: "0 Halluc.", label: "Uncertainty Proof" },
+          { value: "EPA Std.", label: "Compost Guidelines" }
+        ],
+        pills: ["Nitrogen / Carbon Balance", "Preparation Checklists", "EPA Citation Link", "Non-Waste Filter"],
+        speech: [
+          "WasteWise views discarded items not as trash, but as circular resources.",
+          "For organic food scraps, our built-in composting assistant teaches households how to balance green nitrogen scraps with brown carbon materials to create rich, fertile garden soil.",
+          "Interactive preparation cards show you exactly how to rinse, empty, and flatten containers to save municipal storage.",
+          "And if an object is hidden or unrecognized, WasteWise is honest: it never hallucinates a bin rule that doesn't exist."
+        ],
+        mode: "COMPOST_CIRCULARITY"
+      },
+      {
+        id: 4,
+        roman: "ACT V",
+        title: "Verified Logistics",
+        badge: "ACT V OF VI • VERIFIED REWARDS & LOGISTICS",
+        start: 90.0,
+        end: 115.0,
+        heading: "The Missing Link: Verified Pickups",
+        subhead: "Advice without collection is only half a solution. Book preferred-slot collector pickups and earn real EcoPoints on a tamper-proof weight ledger.",
+        stats: [
+          { value: "8 Stages", label: "Pickup Lifecycle" },
+          { value: "+120 PTS", label: "Average Reward" },
+          { value: "QR Auth", label: "Handover Verified" }
+        ],
+        pills: ["Points = Weight × Rate × Quality", "Doorstep Pickup Slots", "Collector Dispatch UI", "Campus Eco-Wallet"],
+        speech: [
+          "Advice without collection is only half a solution. WasteWise closes the loop by connecting residents directly with certified collection partners.",
+          "In just three taps, book a preferred collection slot right at your doorstep.",
+          "At handover, our tamper-proof Proof-of-Disposal system verifies real physical weight with a secure digital QR exchange.",
+          "No photo fraud. No guesswork. Just verified responsible habits rewarded with real EcoPoints for campus perks and local partner benefits."
+        ],
+        mode: "VERIFIED_PICKUP_WALLET"
+      },
+      {
+        id: 5,
+        roman: "ACT VI",
+        title: "Scalable Impact",
+        badge: "ACT VI OF VI • SCALABLE COMMUNITY IMPACT",
+        start: 115.0,
+        end: 135.0,
+        heading: "A Little Clarity. A Greener Community.",
+        subhead: "Proven results in real deployments: -42% bin contamination, +89% hazardous e-waste diverted, and 100% configurable for any university or municipality.",
+        stats: [
+          { value: "-42%", label: "Contamination Drop" },
+          { value: "+89%", label: "E-Waste Diversion" },
+          { value: "Zero Data", label: "Harvesting Stored" }
+        ],
+        pills: ["Campus Pilot Proven", "Municipality Ready", "Google Gemini 3.8", "MIT Licensed Open Core"],
+        speech: [
+          "In our campus pilots, WasteWise reduced bin contamination by over forty percent while redirecting hundreds of pounds of dangerous e-waste to verified recyclers.",
+          "Fully customizable for any university, municipality, or commercial facility in the world.",
+          "Real AI. Real accountability. Real rewards.",
+          "WasteWise: A little clarity, a greener community. Thank you."
+        ],
+        mode: "GRAND_FINALE"
+      }
+    ];
+
+    /* =========================================================================
+       2. REEL CONTROLLER STATE
+       ========================================================================= */
+    let currentTime = 0.0;
+    let isPlaying = false;
+    let playbackSpeed = 1.0;
+    let currentActIndex = 0;
+    let animFrameId = null;
+    let lastTimestamp = null;
+    let audioEnabled = true;
+
+    // Web Audio Synthesizer state
+    let audioCtx = null;
+    let ambientDroneNode = null;
+
+    /* =========================================================================
+       3. SYNTHESIZED SOUND EFFECTS ENGINE (Web Audio API - No External Files)
+       ========================================================================= */
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playWhoosh() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(380, audioCtx.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.35);
+
+        gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.36);
+      } catch (e) {}
+    }
+
+    function playChirp() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.05);
+
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.13);
+      } catch (e) {}
+    }
+
+    function playRewardChime() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+
+          const start = audioCtx.currentTime + (idx * 0.07);
+          gain.gain.setValueAtTime(0.15, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(start);
+          osc.stop(start + 0.45);
+        });
+      } catch (e) {}
+    }
+
+    function toggleAudio() {
+      initAudio();
+      audioEnabled = !audioEnabled;
+      const soundBtn = document.getElementById('sound-btn');
+      const soundIcon = document.getElementById('sound-icon');
+      const soundLabel = document.getElementById('sound-label');
+
+      if (audioEnabled) {
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = 'SFX: ON';
+        soundBtn.classList.remove('text-slate-500', 'border-slate-800');
+        soundBtn.classList.add('text-emerald-400', 'border-emerald-800/40');
+        playChirp();
+      } else {
+        soundIcon.textContent = '🔇';
+        soundLabel.textContent = 'SFX: OFF';
+        soundBtn.classList.add('text-slate-500', 'border-slate-800');
+        soundBtn.classList.remove('text-emerald-400', 'border-emerald-800/40');
+      }
+    }
+
+    /* =========================================================================
+       4. AMBIENT PARTICLE BACKGROUND CANVAS
+       ========================================================================= */
+    const canvas = document.getElementById('ambient-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function initParticles() {
+      particles = [];
+      const count = Math.floor(canvas.width / 35);
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2 + 1,
+          speedY: -(Math.random() * 0.4 + 0.1),
+          speedX: (Math.random() - 0.5) * 0.3,
+          opacity: Math.random() * 0.5 + 0.2,
+          pulse: Math.random() * Math.PI
+        });
+      }
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let p of particles) {
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.pulse += 0.02;
+
+        if (p.y < 0) p.y = canvas.height;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+
+        const currentOpacity = p.opacity + Math.sin(p.pulse) * 0.15;
+        ctx.fillStyle = `rgba(16, 185, 129, ${Math.max(0.1, currentOpacity)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      requestAnimationFrame(drawParticles);
+    }
+
+    /* =========================================================================
+       5. ACT RENDERING ENGINES FOR THE RIGHT SCREEN
+       ========================================================================= */
+    function renderVisualStage(act) {
+      const stage = document.getElementById('visual-stage');
+      const hudModeTitle = document.getElementById('hud-mode-title');
+      const hudStatusText = document.getElementById('hud-status-text');
+
+      if (act.mode === "CHAOS_SIMULATOR") {
+        hudModeTitle.textContent = "DIAGNOSTIC RADAR: RECYCLING FAILURE DETECTED";
+        hudStatusText.textContent = "Facility Alert: Batch rejected due to 8% food grease contamination";
+
+        stage.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center p-6 relative">
+            <div class="text-center max-w-lg mb-6">
+              <span class="px-3 py-1 rounded-full bg-red-950/80 text-red-400 border border-red-800/50 text-xs font-mono-code font-bold tracking-wide animate-pulse">
+                CRITICAL CONTAMINATION THREAT
+              </span>
+              <h2 class="text-xl font-bold text-white mt-2">The Mixed Packaging Trap</h2>
+              <p class="text-xs text-slate-400 mt-1">One unrinsed container or hidden battery spoils a 500 kg paper recycling bale.</p>
+            </div>
+
+            <!-- Scattered Confusion Items Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-xl">
+              
+              <div class="glass-panel p-3.5 rounded-xl border-red-500/40 relative group overflow-hidden bg-red-950/20">
+                <div class="text-3xl mb-1">🍕</div>
+                <div class="text-xs font-bold text-red-400">Greasy Pizza Box</div>
+                <div class="text-[10px] text-slate-400 mt-1">Cardboard ruined by cheese oil. Paper mills reject it.</div>
+                <span class="absolute top-2 right-2 text-[10px] font-mono-code text-red-400 font-bold">REJECTED</span>
+              </div>
+
+              <div class="glass-panel p-3.5 rounded-xl border-amber-500/40 relative group overflow-hidden bg-amber-950/20">
+                <div class="text-3xl mb-1">☕</div>
+                <div class="text-xs font-bold text-amber-400">Takeout Cup</div>
+                <div class="text-[10px] text-slate-400 mt-1">Hidden polyethylene plastic film inside. Not paper!</div>
+                <span class="absolute top-2 right-2 text-[10px] font-mono-code text-amber-400 font-bold">MIXED</span>
+              </div>
+
+              <div class="glass-panel p-3.5 rounded-xl border-red-600/60 relative group overflow-hidden bg-red-950/30 animate-pulse">
+                <div class="text-3xl mb-1">🔋</div>
+                <div class="text-xs font-bold text-red-300">Lithium Battery</div>
+                <div class="text-[10px] text-slate-400 mt-1">Compactor fire risk in standard recycling trucks.</div>
+                <span class="absolute top-2 right-2 text-[10px] font-mono-code text-red-400 font-bold">HAZARD</span>
+              </div>
+
+              <div class="glass-panel p-3.5 rounded-xl border-blue-500/30 relative group overflow-hidden bg-blue-950/20">
+                <div class="text-3xl mb-1">🥤</div>
+                <div class="text-xs font-bold text-blue-400">PET Drink Can</div>
+                <div class="text-[10px] text-slate-400 mt-1">Valuable clean aluminum, but often unrinsed.</div>
+                <span class="absolute top-2 right-2 text-[10px] font-mono-code text-blue-400 font-bold">RINSE 1ST</span>
+              </div>
+
+            </div>
+
+            <div class="mt-6 flex items-center gap-3 bg-red-950/40 px-4 py-2.5 rounded-xl border border-red-900/60 max-w-lg text-xs text-red-200">
+              <span class="text-lg">⚠️</span>
+              <span><strong>Municipal Fact:</strong> When in doubt, "wishcycling" causes more damage than throwing an item into general waste.</span>
+            </div>
+          </div>
+        `;
+      }
+
+      else if (act.mode === "HERO_SCANNER_VIEW") {
+        hudModeTitle.textContent = "WASTEWISE AR VIEWPORT: 60 FPS ACTIVE";
+        hudStatusText.textContent = "Model: YOLOv5-TACO (60 classes) + COCO-SSD • Gemini Snapshot: Verified";
+
+        stage.innerHTML = `
+          <div class="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl bg-black">
+            <!-- Hero Photorealistic AR Image -->
+            <img src="wastewise_ar_scanner_hero.jpg" alt="WasteWise AR Scanner in Action" class="w-full h-full object-cover opacity-90 transition duration-700 hover:scale-105" onerror="this.src='https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80'">
+
+            <!-- Sweeping Green Laser Scanner Line -->
+            <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent scanner-line pointer-events-none shadow-lg shadow-emerald-500"></div>
+
+            <!-- Simulated AR Bounding Boxes & Floating Pills Overlaid on Image -->
+            <div class="absolute top-1/4 left-1/4 reticle-ping pointer-events-auto">
+              <div class="w-28 h-28 border-2 border-emerald-400/90 rounded-lg relative bg-emerald-500/10 backdrop-blur-[2px]">
+                <div class="absolute -top-7 -left-1 px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 text-[11px] font-mono-code font-bold border border-emerald-500/60 flex items-center gap-1 shadow-lg">
+                  🟢 Apple Core: Food Waste
+                </div>
+                <span class="absolute bottom-1 right-1 text-[9px] font-mono-code text-emerald-400/80">98% CONF</span>
+              </div>
+            </div>
+
+            <div class="absolute top-1/3 right-1/4 reticle-ping pointer-events-auto">
+              <div class="w-24 h-32 border-2 border-blue-400/90 rounded-lg relative bg-blue-500/10 backdrop-blur-[2px]">
+                <div class="absolute -top-7 -left-1 px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-[11px] font-mono-code font-bold border border-blue-500/60 flex items-center gap-1 shadow-lg">
+                  🔵 Drink Can: Dry Recycling
+                </div>
+                <span class="absolute bottom-1 right-1 text-[9px] font-mono-code text-blue-400/80">95% CONF</span>
+              </div>
+            </div>
+
+            <div class="absolute bottom-1/4 left-1/3 reticle-ping pointer-events-auto">
+              <div class="w-24 h-24 border-2 border-red-500/90 rounded-lg relative bg-red-500/15 backdrop-blur-[2px] animate-pulse">
+                <div class="absolute -top-7 -left-1 px-2.5 py-0.5 rounded-full bg-red-950 text-red-300 text-[11px] font-mono-code font-bold border border-red-500/80 flex items-center gap-1 shadow-lg">
+                  🔴 Lithium Battery: E-Waste
+                </div>
+                <span class="absolute bottom-1 right-1 text-[9px] font-mono-code text-red-400">DROP-OFF REQ</span>
+              </div>
+            </div>
+
+            <!-- AR Viewfinder Corner Brackets -->
+            <div class="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-emerald-400 pointer-events-none"></div>
+            <div class="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-emerald-400 pointer-events-none"></div>
+            <div class="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-emerald-400 pointer-events-none"></div>
+            <div class="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-emerald-400 pointer-events-none"></div>
+          </div>
+        `;
+      }
+
+      else if (act.mode === "COMPONENT_SEPARATION") {
+        hudModeTitle.textContent = "COMPONENT DECONSTRUCTOR: 3 EXAMPLES ACTIVE";
+        hudStatusText.textContent = "Interactive Mode: Click any item to preview component separation rules";
+
+        stage.innerHTML = `
+          <div class="w-full h-full flex flex-col p-5 overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <span>🔬</span> Component Separation Engine
+                </h3>
+                <p class="text-xs text-slate-400">Composite items must be separated into their constituent material streams.</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/40 text-xs font-mono-code">
+                Rule R1 - R8 Standard
+              </span>
+            </div>
+
+            <!-- 3 Interactive Examples -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 flex-1">
+              
+              <!-- Card 1: Coffee Cup -->
+              <div class="glass-panel p-4 rounded-xl border-emerald-500/30 flex flex-col justify-between bg-black/40 hover:border-emerald-400 transition cursor-pointer" onclick="playChirp()">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-2xl">☕</span>
+                    <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-yellow-950 text-yellow-400 border border-yellow-800">2 Components</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">Disposable Coffee Cup</h4>
+                  <div class="space-y-2 mt-3 text-xs">
+                    <div class="p-2 rounded-lg bg-blue-950/40 border border-blue-800/40 text-blue-200">
+                      <strong>1. Rigid Lid:</strong> 🔵 Blue Bin (Dry Recycling) after rinsing.
+                    </div>
+                    <div class="p-2 rounded-lg bg-yellow-950/40 border border-yellow-800/40 text-yellow-200">
+                      <strong>2. Paper Body:</strong> 🟡 General Waste (Lined with PE plastic).
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono-code text-slate-400">
+                  Campus Guide Citation: Rule R4
+                </div>
+              </div>
+
+              <!-- Card 2: Pizza Box -->
+              <div class="glass-panel p-4 rounded-xl border-emerald-500/30 flex flex-col justify-between bg-black/40 hover:border-emerald-400 transition cursor-pointer" onclick="playChirp()">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-2xl">📦</span>
+                    <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Clean / Greasy</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">Takeout Pizza Box</h4>
+                  <div class="space-y-2 mt-3 text-xs">
+                    <div class="p-2 rounded-lg bg-blue-950/40 border border-blue-800/40 text-blue-200">
+                      <strong>1. Clean Top Lid:</strong> 🔵 Blue Bin (Tear & Flatten).
+                    </div>
+                    <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-200">
+                      <strong>2. Greasy Base:</strong> 🟢 Green Food Waste / Compost.
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono-code text-slate-400">
+                  Campus Guide Citation: Rule R2
+                </div>
+              </div>
+
+              <!-- Card 3: Lithium Battery -->
+              <div class="glass-panel p-4 rounded-xl border-red-500/40 flex flex-col justify-between bg-black/40 hover:border-red-400 transition cursor-pointer" onclick="playChirp()">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-2xl">🔋</span>
+                    <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-800">🔴 Special Handling</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">18650 / AA Batteries</h4>
+                  <div class="space-y-2 mt-3 text-xs">
+                    <div class="p-2 rounded-lg bg-red-950/40 border border-red-800/60 text-red-200 font-semibold">
+                      DO NOT PLACE IN BINS:
+                    </div>
+                    <p class="text-[11px] text-slate-300">
+                      Take directly to Special Collection Desk #2 or verified e-waste collection locker.
+                    </p>
+                  </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono-code text-slate-400">
+                  Campus Guide Citation: Rule R5
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }
+
+      else if (act.mode === "COMPOST_CIRCULARITY") {
+        hudModeTitle.textContent = "CIRCULAR RESOURCE ASSISTANT: SOIL RECOVERY ACTIVE";
+        hudStatusText.textContent = "EPA Guideline Synchronized: 3:1 Carbon-to-Nitrogen ratio calculated";
+
+        stage.innerHTML = `
+          <div class="w-full h-full flex flex-col justify-between p-6">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50 text-xs font-mono-code">
+                  EPA HOME COMPOST ENGINE
+                </span>
+                <span class="text-xs font-mono-code text-slate-400">Balanced Microbiology: pH 6.8</span>
+              </div>
+              <h3 class="text-lg font-bold text-white">Turning Food Scraps Into Soil Capital</h3>
+              <p class="text-xs text-slate-400 mt-1">WasteWise teaches users how to create fertile home soil instead of landfill methane.</p>
+            </div>
+
+            <!-- Interactive Composting Ratio Visualizer -->
+            <div class="glass-panel p-5 rounded-xl border-emerald-500/30 my-4 bg-black/40">
+              <div class="flex items-center justify-between text-xs font-mono-code mb-2">
+                <span class="text-emerald-400 font-bold">🟢 NITROGEN GREENS (25%)</span>
+                <span class="text-amber-400 font-bold">🟤 CARBON BROWNS (75%)</span>
+              </div>
+
+              <!-- Visual Dual-Colored Progress Ratio Bar -->
+              <div class="w-full h-5 rounded-full overflow-hidden flex border border-slate-700">
+                <div class="h-full bg-emerald-500 w-1/4 flex items-center justify-center text-[10px] text-black font-extrabold">
+                  Fruit Peels
+                </div>
+                <div class="h-full bg-amber-600 w-3/4 flex items-center justify-center text-[10px] text-white font-extrabold">
+                  Dry Leaves & Shredded Cardboard
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+                <div class="bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-900/40">
+                  <div class="font-bold text-emerald-300">Acceptable Greens:</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">Apple cores, banana peels, tea leaves, vegetable tops.</div>
+                </div>
+                <div class="bg-amber-950/30 p-2.5 rounded-lg border border-amber-900/40">
+                  <div class="font-bold text-amber-300">Acceptable Browns:</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">Dry cardboard egg cartons, sawdust, fallen yard leaves.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Honest AI Assurance Box -->
+            <div class="flex items-center gap-3 bg-emerald-950/40 p-3 rounded-xl border border-emerald-800/40 text-xs text-slate-300">
+              <span class="text-xl">🛡️</span>
+              <div>
+                <strong class="text-emerald-400 font-mono-code">ZERO HALLUCINATION PRINCIPLE:</strong>
+                <span class="text-[11px] block text-slate-400">If an item is obscured, greasy, or unverified by local campus policy, WasteWise refuses to guess and marks it as <em>Needs Confirmation</em>.</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      else if (act.mode === "VERIFIED_PICKUP_WALLET") {
+        hudModeTitle.textContent = "DOORSTEP PICKUP & VERIFIED ECO-WALLET LEDGER";
+        hudStatusText.textContent = "Cryptographic Handover QR: Verified • Measured Weight: 3.20 kg";
+
+        stage.innerHTML = `
+          <div class="relative w-full h-full flex flex-col md:flex-row overflow-hidden rounded-xl bg-black">
+            <!-- Left Half: Photorealistic Generated Handover Image -->
+            <div class="w-full md:w-1/2 h-48 md:h-full relative overflow-hidden">
+              <img src="wastewise_verified_collection_handover.jpg" alt="Verified Handover Scene" class="w-full h-full object-cover opacity-90" onerror="this.src='https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80'">
+              <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black via-transparent to-transparent"></div>
+              <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-mono-code text-emerald-400 border border-emerald-800">
+                CAMPUS HUB DISPATCH #4
+              </div>
+            </div>
+
+            <!-- Right Half: Interactive Eco-Wallet Simulator -->
+            <div class="w-full md:w-1/2 h-full p-5 flex flex-col justify-between bg-[#08120d]">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono-code text-emerald-400 font-bold uppercase tracking-wider">
+                    PROOF-OF-DISPOSAL LEDGER
+                  </span>
+                  <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                    ANTI-FRAUD FORMULA
+                  </span>
+                </div>
+
+                <!-- Digital Wallet Points Card -->
+                <div class="p-4 rounded-xl bg-gradient-to-tr from-emerald-950 to-teal-950 border border-emerald-500/40 relative overflow-hidden shadow-xl">
+                  <div class="text-[11px] font-mono-code text-emerald-400/80">HOUSEHOLD REWARD WALLET</div>
+                  <div class="text-3xl font-extrabold text-white mt-1 flex items-baseline gap-2">
+                    <span id="wallet-balance">1,480</span> <span class="text-sm font-mono-code text-emerald-400">EcoPoints</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 mt-1">Verified CO₂ Offset: <strong>4.82 kg CO₂e</strong></div>
+                </div>
+
+                <!-- Handover Details Breakdown -->
+                <div class="space-y-1.5 mt-3 text-xs font-mono-code">
+                  <div class="flex justify-between py-1 border-b border-slate-800">
+                    <span class="text-slate-400">Scheduled Slot:</span>
+                    <span class="text-white">Thu 14:00 - 14:30</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-800">
+                    <span class="text-slate-400">Verified Weight:</span>
+                    <span class="text-emerald-400 font-bold">3.20 kg (PET & Cans)</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-800">
+                    <span class="text-slate-400">Quality Factor:</span>
+                    <span class="text-teal-400">1.0 (Clean & Rinsed)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Handover Trigger Button -->
+              <button onclick="simulateHandoverVerification()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 transition scale-100 active:scale-95">
+                <span>⚡</span> SIMULATE COLLECTOR QR SCAN (+120 PTS)
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      else if (act.mode === "GRAND_FINALE") {
+        hudModeTitle.textContent = "FINALE: SCALABLE CAMPUS & MUNICIPALITY SYSTEM";
+        hudStatusText.textContent = "Google Hackathon 2026: Built with Gemini 3.8 Flash • Ready for Deployment";
+
+        stage.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+            <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 p-[2px] mb-5 shadow-2xl shadow-emerald-500/40 animate-pulse-glow">
+              <div class="w-full h-full bg-[#05110b] rounded-3xl flex items-center justify-center text-5xl">
+                🌱
+              </div>
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              A Little Clarity. A Greener Community.
+            </h2>
+            <p class="text-sm text-slate-300 max-w-md mt-2 leading-relaxed">
+              WasteWise bridges the gap between AI classification, component separation, verified collection logistics, and tangible rewards.
+            </p>
+
+            <!-- Final Metric Matrix -->
+            <div class="grid grid-cols-3 gap-3 w-full max-w-md my-5">
+              <div class="glass-panel p-3 rounded-xl border-emerald-500/30">
+                <div class="text-xl font-extrabold text-emerald-400">-42%</div>
+                <div class="text-[10px] text-slate-400 uppercase font-mono-code">Contamination</div>
+              </div>
+              <div class="glass-panel p-3 rounded-xl border-cyan-500/30">
+                <div class="text-xl font-extrabold text-cyan-400">+89%</div>
+                <div class="text-[10px] text-slate-400 uppercase font-mono-code">E-Waste Divert</div>
+              </div>
+              <div class="glass-panel p-3 rounded-xl border-amber-500/30">
+                <div class="text-xl font-extrabold text-amber-400">100%</div>
+                <div class="text-[10px] text-slate-400 uppercase font-mono-code">Local Privacy</div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3">
+              <button onclick="resetReel(); playWhoosh();" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/30 transition">
+                <span>↺</span> REPLAY BRAG REEL (02:15)
+              </button>
+              <a href="index.html" target="_blank" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700 flex items-center gap-2 transition">
+                <span>📱</span> TRY LIVE PROTOTYPE
+              </a>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function simulateHandoverVerification() {
+      playRewardChime();
+      const balanceEl = document.getElementById('wallet-balance');
+      if (balanceEl) {
+        let val = parseInt(balanceEl.textContent.replace(/,/g, ''));
+        val += 120;
+        balanceEl.textContent = val.toLocaleString();
+        balanceEl.classList.add('text-amber-400', 'scale-110');
+        setTimeout(() => {
+          balanceEl.classList.remove('text-amber-400', 'scale-110');
+        }, 600);
+      }
+    }
+
+    /* =========================================================================
+       6. TIMELINE & ACT SYNCHRONIZATION LOGIC
+       ========================================================================= */
+    function updateReelUI() {
+      // 1. Determine active act
+      let activeAct = ACTS[0];
+      for (let i = 0; i < ACTS.length; i++) {
+        if (currentTime >= ACTS[i].start && currentTime < ACTS[i].end) {
+          activeAct = ACTS[i];
+          break;
+        }
+      }
+      if (currentTime >= REEL_DURATION) {
+        activeAct = ACTS[ACTS.length - 1];
+      }
+
+      // 2. If act changed, update left panel and render stage
+      if (activeAct.id !== currentActIndex) {
+        currentActIndex = activeAct.id;
+        playWhoosh();
+        onActChange(activeAct);
+      }
+
+      // 3. Update scrubber progress
+      const progressPercent = Math.min(100, (currentTime / REEL_DURATION) * 100);
+      document.getElementById('scrubber-progress').style.width = `${progressPercent}%`;
+
+      // 4. Update Time Readout
+      document.getElementById('time-current').textContent = formatTime(currentTime);
+      const remaining = Math.max(0, REEL_DURATION - currentTime);
+      document.getElementById('time-remaining').textContent = `-${formatTime(remaining)}`;
+
+      // 5. Update Teleprompter active sentence
+      updateTeleprompter(activeAct);
+
+      // 6. Update Act Quick Switcher pills
+      renderActPills(activeAct.id);
+    }
+
+    function onActChange(act) {
+      // Update badge, heading, subhead
+      document.getElementById('act-badge').textContent = act.badge;
+      document.getElementById('act-timestamp-label').textContent = `${formatTime(act.start)} - ${formatTime(act.end)}`;
+      document.getElementById('scene-heading').textContent = act.heading;
+      document.getElementById('scene-subhead').textContent = act.subhead;
+
+      // Render Stat Gauges
+      const statContainer = document.getElementById('stat-gauges');
+      statContainer.innerHTML = act.stats.map(s => `
+        <div class="glass-panel p-2.5 rounded-xl border-emerald-900/50 bg-black/40">
+          <div class="text-lg xl:text-xl font-extrabold text-emerald-400 font-mono-code">${s.value}</div>
+          <div class="text-[10px] text-slate-400 font-medium">${s.label}</div>
+        </div>
+      `).join('');
+
+      // Render Tech Pills
+      const pillContainer = document.getElementById('tech-pills');
+      pillContainer.innerHTML = act.pills.map(p => `
+        <span class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
+          ${p}
+        </span>
+      `).join('');
+
+      // Populate Teleprompter
+      const box = document.getElementById('teleprompter-box');
+      box.innerHTML = act.speech.map((sentence, idx) => `
+        <p class="tele-line text-sm xl:text-base leading-relaxed text-slate-400 transition-all duration-200" id="tele-line-${idx}">
+          "${sentence}"
+        </p>
+      `).join('');
+
+      // Render the stage for this act
+      renderVisualStage(act);
+    }
+
+    function updateTeleprompter(act) {
+      const actDuration = act.end - act.start;
+      const progressInAct = currentTime - act.start;
+      const sentenceCount = act.speech.length;
+      const sentenceIdx = Math.min(sentenceCount - 1, Math.floor((progressInAct / actDuration) * sentenceCount));
+
+      for (let i = 0; i < sentenceCount; i++) {
+        const line = document.getElementById(`tele-line-${i}`);
+        if (!line) continue;
+        if (i === sentenceIdx) {
+          line.classList.remove('text-slate-400', 'font-normal');
+          line.classList.add('text-white', 'font-semibold', 'scale-[1.01]', 'border-l-2', 'border-emerald-400', 'pl-2');
+        } else {
+          line.classList.add('text-slate-500', 'font-normal');
+          line.classList.remove('text-white', 'font-semibold', 'scale-[1.01]', 'border-l-2', 'border-emerald-400', 'pl-2');
+        }
+      }
+    }
+
+    function renderActPills(activeId) {
+      const container = document.getElementById('act-pills');
+      container.innerHTML = ACTS.map((act, i) => `
+        <button onclick="jumpToSecond(${act.start})" class="px-2.5 py-1 rounded-full text-[11px] font-mono-code transition ${i === activeId ? 'bg-emerald-500 text-black font-bold shadow-md shadow-emerald-500/30' : 'text-slate-400 hover:text-white'}">
+          ${act.roman}
+        </button>
+      `).join('');
+    }
+
+    function formatTime(sec) {
+      const mins = Math.floor(sec / 60);
+      const remainingSec = (sec % 60).toFixed(1);
+      return `${mins < 10 ? '0' : ''}${mins}:${remainingSec < 10 ? '0' : ''}${remainingSec}`;
+    }
+
+    /* =========================================================================
+       7. PLAYBACK LOOP & USER CONTROLS
+       ========================================================================= */
+    function reelLoop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const delta = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      if (isPlaying) {
+        currentTime += delta * playbackSpeed;
+        if (currentTime >= REEL_DURATION) {
+          currentTime = REEL_DURATION;
+          pauseReel();
+        }
+        updateReelUI();
+      }
+
+      if (currentTime < REEL_DURATION) {
+        animFrameId = requestAnimationFrame(reelLoop);
+      }
+    }
+
+    function togglePlay() {
+      initAudio();
+      if (isPlaying) {
+        pauseReel();
+      } else {
+        playReel();
+      }
+    }
+
+    function playReel() {
+      if (currentTime >= REEL_DURATION) {
+        currentTime = 0;
+      }
+      isPlaying = true;
+      lastTimestamp = null;
+      document.getElementById('play-icon').textContent = '⏸';
+      document.getElementById('play-label').textContent = 'PAUSE REEL';
+      animFrameId = requestAnimationFrame(reelLoop);
+      playChirp();
+    }
+
+    function pauseReel() {
+      isPlaying = false;
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-label').textContent = 'RESUME REEL';
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    }
+
+    function resetReel() {
+      pauseReel();
+      currentTime = 0.0;
+      lastTimestamp = null;
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-label').textContent = 'START REEL';
+      updateReelUI();
+    }
+
+    function stepAct(direction) {
+      let nextId = currentActIndex + direction;
+      if (nextId < 0) nextId = 0;
+      if (nextId >= ACTS.length) nextId = ACTS.length - 1;
+      jumpToSecond(ACTS[nextId].start);
+    }
+
+    function jumpToSecond(sec) {
+      currentTime = Math.min(REEL_DURATION, Math.max(0, sec));
+      lastTimestamp = null;
+      updateReelUI();
+      playChirp();
+    }
+
+    function handleScrubberClick(e) {
+      const track = document.getElementById('scrubber-track');
+      const rect = track.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+      jumpToSecond(ratio * REEL_DURATION);
+    }
+
+    function setSpeed(speed, btn) {
+      playbackSpeed = speed;
+      document.querySelectorAll('.speed-pill').forEach(p => {
+        p.classList.remove('bg-emerald-500', 'text-black', 'font-bold');
+        p.classList.add('text-slate-400');
+      });
+      btn.classList.add('bg-emerald-500', 'text-black', 'font-bold');
+      btn.classList.remove('text-slate-400');
+      playChirp();
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    /* =========================================================================
+       8. INITIALIZATION ON LOAD
+       ========================================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      resizeCanvas();
+      drawParticles();
+      onActChange(ACTS[0]);
+      updateReelUI();
+    });
+  </script>
+</body>
+</html>

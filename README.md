@@ -79,3 +79,11 @@ The Disposal guide has a searchable 141-item catalog and a JSON download. Exact 
 Photo, text and live results show a grouped management plan with supporting guide passages. Plans recompute after corrections and when reviewing saved results. Composting and electronics reuse information is separately labelled general education with EPA source links; it does not change local collection rules. Try **Try household & e-waste demo** to exercise mixed cardboard, electronics and compostable scraps without using an API key.
 
 The portable catalog is also checked into `data/wastewise-items.json`. `dist/catalog.js` is the application source of truth; keep the JSON export in sync when editing it.
+
+## Obsidian mobile studio
+
+The React/TypeScript presentation layer uses Tailwind CSS, Framer Motion and Lucide icons. It retains the original DOM controls and scanner modules in a mounted core host, preserving camera lifecycle, guide results and local history. Desktop offers Phone Frame and Full Bleed previews; phones use the full dynamic viewport and safe-area padding.
+
+Dashboard API settings affect only GET /dashboard and POST /action, with an eight-second request timeout, explicit demo fallback and a JSON ping tester. Scanner requests remain on the same-origin /api/analyze endpoint with server-managed Gemini credentials. Blank dashboard base URL uses the built-in sample endpoint, clearly labelled demo data. Action echoes from that endpoint are demonstration records, not verified disposal, pickup or rewards. Optional dashboard bearer tokens are stored in browser localStorage as requested; use a scoped token.
+
+Run npm run typecheck and npm test before deployment. npm run build generates the UI bundle before embedding Worker assets. For a local preview on another port, set PORT before npm start.
