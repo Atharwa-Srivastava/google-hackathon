@@ -43,7 +43,7 @@ Choose **Live scan**, then **Start scan** and allow camera access. The app activ
   - 🔵 **Dry Recyclable Waste** (`#3b82f6`) → Blue Recycling Bin
   - 🟡 **General Waste** (`#eab308`) → Black / Grey Bin
   - 🔴 **Hazardous / E-Waste** (`#ef4444`) → Special Collection Desk
-- **Dynamic Tracking & Exit Handling:** The tag smoothly tracks moving objects using exponential smoothing. As an item leaves the camera frame or is dropped into a bin, the tag vanishes instantly.
+- **Dynamic Tracking & Exit Handling:** The tag smoothly tracks moving objects using exponential smoothing. As an item leaves the camera frame or is dropped into a bin, the tag is hidden on the next missing detection or after a short stale timeout.
 - **Hybrid AI Fallback & Training Readiness:**
   - If an item is uncataloged or ambiguous, the live scan continues to capture snapshots for Gemini AI multi-item verification when you tap **Finish scan**.
   - Drop-in architecture ready for custom-trained **Google Teachable Machine** models (`model.json` + `weights.bin`) in `dist/`.
