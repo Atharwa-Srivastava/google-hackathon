@@ -10,5 +10,11 @@ export const rules = [
 ];
 export const items = [
 ['Plastic bottle','Rigid plastic','R1','bottle plastic water bottle pet bottle'],['Yogurt tub','Rigid plastic','R1','yogurt yoghurt tub'],['Plastic lid','Rigid plastic','R1','plastic lid'],['Cardboard box','Cardboard','R2','cardboard box parcel'],['Newspaper','Paper','R2','newspaper paper sheet'],['Pizza box','Cardboard; condition needs confirmation','R2','pizza'],['Drink can','Aluminium','R3','can soda aluminium aluminum'],['Food tin','Steel','R3','tin steel'],['Glass jar','Glass','R4','glass jar'],['Glass bottle','Glass','R4','glass bottle'],['Banana peel','Organic food waste','R5','banana'],['Vegetable scraps','Organic food waste','R5','vegetable scraps potato carrot'],['Eggshells','Organic food waste','R5','egg eggshell'],['Tea leaves','Organic food waste','R5','tea leaves'],['Coffee cup','Plastic-lined paper + optional rigid plastic lid','R6','coffee cup takeaway cup paper cup'],['Snack wrapper','Multilayer packaging','R6','wrapper chips crisp snack'],['Plastic bag','Flexible plastic','R6','plastic bag carrier bag'],['Drink carton','Mixed-material carton','R6','carton tetra milk juice'],['Used tissue','Soiled paper','R7','tissue napkin'],['Battery','Battery / special waste','R8','battery batteries']
-].map(([name,material,rule,keywords])=>({name,material,rule,keywords}));
+].concat([
+['Orange peel','Organic fruit scraps','R5','orange peel citrus peel'],
+['Paper bag','Paper; confirm clean and unlined','R2','paper bag'],
+['Cardboard egg carton','Cardboard','R2','cardboard egg carton'],
+['Rigid plastic container','Rigid plastic','R1','rigid plastic container tub'],
+['Plastic bottle cap','Rigid plastic','R1','plastic bottle cap']
+]).map(([name,material,rule,keywords])=>({name,material,rule,keywords}));
 export function matchItems(text){const t=text.toLowerCase().trim();if(!t)return [];const exact=items.find(i=>i.name.toLowerCase()===t);if(exact)return [exact];return items.filter(i=>t.includes(i.name.toLowerCase())||i.keywords.split(' ').some(w=>w.length>2&&new RegExp('\\b'+w+'s?\\b').test(t)));}

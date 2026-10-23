@@ -49,6 +49,23 @@ WASTE_CATEGORIES.GLASS={name:'Glass collection',bin:'Glass collection',dustbin:'
 for(const raw of ['meal carton','other carton','pop tab','glass cup','disposable food container','toilet tube','egg carton','plastic straw','disposable plastic cup','plastic utensils','squeezable tube','spread tub','garbage bag','six pack rings','foam cup','paper straw','aluminium blister pack','rope & strings','other plastic container','scrap metal','plastic glooves','wrapping paper','carded blister pack','foam food container','other plastic cup','metal bottle cap']){
  ITEM_CLASSIFICATIONS[raw]={category:'CHECK',label:raw.charAt(0).toUpperCase()+raw.slice(1)};
 }
+Object.assign(ITEM_CLASSIFICATIONS,{
+ 'cardboard':{category:'CHECK',label:'Cardboard · check grease',family:'cardboard'},
+ 'other carton':{category:'CHECK',label:'Cardboard / carton · verify lining',family:'cardboard'},
+ 'banana peel':{category:'WET',label:'Banana peel',catalog:'Banana peel',family:'banana'},
+ 'orange peel':{category:'WET',label:'Orange peel',catalog:'Orange peel',family:'orange'},
+ 'vegetable scraps':{category:'WET',label:'Vegetable scraps',catalog:'Vegetable scraps'},
+ 'eggshells':{category:'WET',label:'Eggshells',catalog:'Eggshells'},
+ 'tea leaves':{category:'WET',label:'Loose tea leaves',catalog:'Tea leaves'},
+ 'bottle':{category:'CHECK',label:'Bottle · verify material',family:'bottle',uncertain:true},
+ 'cup':{category:'CHECK',label:'Cup · verify lining',family:'cup',uncertain:true}
+ ,'rigid plastic container':{category:'DRY_RECYCLABLE',label:'Rigid plastic container',catalog:'Rigid plastic container'}
+ ,'cardboard egg carton':{category:'DRY_RECYCLABLE',label:'Cardboard egg carton',catalog:'Cardboard egg carton',tip:'Keep clean and dry. Flatten cardboard. Separate any food-soiled sections.'}
+});
+for(const raw of ['normal paper','magazine paper','corrugated carton'])ITEM_CLASSIFICATIONS[raw].tip='Clean, dry paper and cardboard go in dry recycling. Flatten boxes. Separate greasy or food-soiled sections into general waste.';
+for(const food of ['banana','apple','orange','broccoli','carrot'])ITEM_CLASSIFICATIONS[food]={category:'WET',label:food[0].toUpperCase()+food.slice(1)+' · if discarded',family:food,uncertain:true,tip:'Food detected. Confirm it is discarded food or scraps before sorting. Remove packaging.'};
+for(const raw of ['clear plastic bottle','other plastic bottle','glass bottle'])ITEM_CLASSIFICATIONS[raw].family='bottle';
+ITEM_CLASSIFICATIONS['pizza box'].family='cardboard';ITEM_CLASSIFICATIONS['corrugated carton'].family='cardboard';
 WASTE_CATEGORIES.CHECK={name:'Needs confirmation',bin:'Check local guide',dustbin:'Guide check',color:'#94a3b8',icon:'⚪',glow:'transparent',note:'Material detected; disposal is not confirmed by the guide.'};
 WASTE_CATEGORIES.WET.dustbin='Biodegradable';WASTE_CATEGORIES.DRY_RECYCLABLE.dustbin='Dry recycling';WASTE_CATEGORIES.GENERAL.dustbin='General waste';WASTE_CATEGORIES.HAZARDOUS.dustbin='Special collection';
 
@@ -97,7 +114,8 @@ export function classifyWasteObject(rawClass) {
       color: categoryInfo.color,
       glow: categoryInfo.glow,
       icon: categoryInfo.icon,
-      note: match.tip || categoryInfo.note
+      note: match.tip || categoryInfo.note,
+      family:match.family||key,uncertain:match.uncertain===true,catalog:match.catalog||null
     };
   }
 

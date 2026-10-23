@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {trackRegion} from '../dist/visual-motion.js';
+import {normalizeLiveTags} from '../dist/live-tags.js';
+const scene=(dx=0,empty=false)=>{const width=96,height=72,data=new Uint8Array(width*height).fill(35);if(!empty)for(let y=20;y<55;y++)for(let x=20;x<55;x++)data[y*width+x+dx]=(x*67+y*103+x*y*7)%220+25;return {width,height,data};};
+test('appearance follows motion during missing neural detections',()=>{const result=trackRegion(scene(),scene(4),[20,20,35,35]);assert.ok(result.box);assert.ok(Math.abs(result.box[0]-24)<1);assert.ok(Math.abs(result.box[1]-20)<1);});
+test('removing the object rejects its old visual patch',()=>{assert.equal(trackRegion(scene(),scene(0,true),[20,20,35,35]).lost,true);});
+test('textureless regions do not invent visual tracking evidence',()=>{assert.equal(trackRegion(scene(0,true),scene(0,true),[20,20,35,35]),null);});
+test('household AI boxes have safe coordinates and guide categories',()=>{const tags=normalizeLiveTags([{type:'Banana peel',certain:true,box_2d:[100,200,500,800]},{type:'Pizza box',box_2d:[300,0,800,500]}],640,480);assert.equal(tags.length,2);assert.deepEqual(tags[0].bbox,[128,48,384,192]);assert.equal(tags[0].info.dustbin,'Biodegradable');assert.equal(tags[1].info.dustbin,'Guide check');});
+test('people, furniture, malformed and full-frame AI boxes never become waste tags',()=>{const b=[100,100,600,600];assert.equal(normalizeLiveTags([{type:'person',box_2d:b},{type:'chair',box_2d:b},{type:'Banana peel',box_2d:[0,0,1000,1000]},{type:'Plastic bottle',box_2d:[100,100,10,5]},{type:'Pizza box',box_2d:['1',0,100,100]},{type:'banana peel',box_2d:[0,0,Infinity,10]}],640,480).length,0);});
