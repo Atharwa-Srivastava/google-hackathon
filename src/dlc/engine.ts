@@ -1,13 +1,13 @@
 import {DlcDecisionGate,frameSignature,sceneDifference} from '../../dist/dlc-core.js';
 import {dlcRuntime} from '../../dist/dlc-runtime.js';
 export type DlcView={state:'off'|'loading'|'calibrating'|'ready'|'checking'|'accept'|'reject'|'background'|'paused'|'error';label:string;reason:string;rule?:string;elapsed?:number;confidence?:number;inferenceMs?:number;coverage?:string;packagingReady?:boolean;sound?:boolean;roi?:{width:number;height:number};evaluation?:{datasetImages:number;testAccuracy:number;split:Record<string,number>;note:string};cameraName?:string};
-type Pending={id:number;scene:number;capturedAt:number;watchdogAt:number;signature:number[]};
+type Pending={id:number;scene:number;visualScene:number;capturedAt:number;watchdogAt:number;signature:number[]};
 export class DlcEngine {
  private stream:MediaStream|null=null;
  private lease:ReturnType<typeof dlcRuntime.acquire>|null=null;
  private frame=0;private generation=0;private lastFrame=0;private workerReady=false;private running=false;private backgrounded=false;
  private pending:Pending|null=null;private requestId=0;private baseline:number[]|null=null;private previous:number[]|null=null;private latest:number[]=[];private stableFrames=0;private lastSent=0;
- private gate=new DlcDecisionGate();private canvas=document.createElement('canvas');private context:CanvasRenderingContext2D;
+ private visualScene=0;private recognizedUntil=0;private gate=new DlcDecisionGate();private canvas=document.createElement('canvas');private context:CanvasRenderingContext2D;
  private audio:AudioContext|null=null;private lastBeep=-Infinity;private sound=true;private lastKey='';private evaluation:DlcView['evaluation'];private coverage='Preparing local models';private packagingReady=false;private deviceId='';private reconnectTimer:ReturnType<typeof setTimeout>|null=null;
  constructor(private video:HTMLVideoElement,private update:(state:DlcView)=>void){
   this.canvas.width=224;this.canvas.height=224;const context=this.canvas.getContext('2d',{willReadFrequently:true});if(!context)throw Error('Camera image processing is unavailable.');this.context=context;
@@ -20,19 +20,21 @@ export class DlcEngine {
  private beep(force=false){if(!this.sound||this.audio?.state!=='running'||!force&&performance.now()-this.lastBeep<3000)return;this.lastBeep=performance.now();for(const offset of [0,.17]){const oscillator=this.audio.createOscillator(),gain=this.audio.createGain(),t=this.audio.currentTime+offset;oscillator.type='sine';oscillator.frequency.value=880;gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(.10,t+.015);gain.gain.exponentialRampToValueAtTime(.001,t+.12);oscillator.connect(gain);gain.connect(this.audio.destination);oscillator.start(t);oscillator.stop(t+.13);oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};}}
  private emit(view:DlcView){const full={...view,coverage:this.coverage,packagingReady:this.packagingReady,evaluation:this.evaluation,sound:this.audio?.state==='running'&&this.sound};const key=JSON.stringify({...full,elapsed:view.elapsed?Math.round(view.elapsed/50)*50:0,inferenceMs:view.inferenceMs?Math.round(view.inferenceMs):0});if(key===this.lastKey)return;this.lastKey=key;this.update(full);if(view.state==='reject')this.beep();}
  async start(deviceId=''){
-  this.stop(false);const generation=++this.generation;this.running=true;this.backgrounded=document.hidden;this.deviceId=deviceId;this.workerReady=false;this.packagingReady=false;this.baseline=null;this.previous=null;this.stableFrames=0;this.pending=null;this.gate.reset();this.lastFrame=0;this.lastSent=0;this.lastKey='';this.lastBeep=-Infinity;
+  this.stop(false);this.visualScene++;this.recognizedUntil=0;const generation=++this.generation;this.running=true;this.backgrounded=document.hidden;this.deviceId=deviceId;this.workerReady=false;this.packagingReady=false;this.baseline=null;this.previous=null;this.stableFrames=0;this.pending=null;this.gate.reset();this.lastFrame=0;this.lastSent=0;this.lastKey='';this.lastBeep=-Infinity;
   this.emit({state:'loading',label:'Opening the bin camera',reason:'Material checks start first. Packaging verification prepares in parallel.',rule:'',elapsed:0,inferenceMs:0});void this.enableAudio();
   try{
    if(!navigator.mediaDevices?.getUserMedia||typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined')throw Error('DLC needs camera access, workers and OffscreenCanvas. Use current laptop Chrome or Edge.');
    this.lease=dlcRuntime.acquire((data:any)=>{
     if(generation!==this.generation||!this.running)return;
+    if(data.type==='unavailable'){this.pending=null;this.workerReady=false;this.packagingReady=false;this.gate.reset();this.coverage=data.reason;this.emit({state:'loading',label:'Detection is paused',reason:data.reason,rule:'',elapsed:0});return;}
     if(data.type==='restarting'){this.pending=null;this.workerReady=false;this.packagingReady=false;this.gate.reset();this.coverage=data.reason;this.emit({state:this.backgrounded?'background':'loading',label:'Detector is recovering',reason:'The camera stays on. No item is approved while the detector reconnects.',rule:'',elapsed:0});return;}
     if(data.type==='coverage'){const changed=this.packagingReady!==data.packagingReady;this.packagingReady=!!data.packagingReady;this.coverage=data.coverage;if(changed){this.gate.reset();if(this.workerReady&&this.baseline&&!this.backgrounded)this.showGate(this.gate.state);}return;}
     if(data.type==='ready'){this.workerReady=true;this.evaluation=data.evaluation;this.packagingReady=!!data.packagingReady;this.coverage=data.coverage;if(this.backgrounded)return;if(this.baseline)this.showGate(this.gate.reset());else this.calibrate();return;}
     if(data.type==='packaging-update'||data.type==='tick'){if(this.workerReady&&!this.pending&&!this.backgrounded)this.loop(performance.now());return;}
     if((data.type!=='result'&&data.type!=='skipped')||data.id!==this.pending?.id)return;
     const pending=this.pending;this.pending=null;if(data.type==='skipped'){this.loop(performance.now());return;}if(this.backgrounded||!pending)return;
-    const diff=sceneDifference(pending.signature,this.latest);if(diff.mean>14&&diff.ratio>.20){this.showGate(this.gate.observe({present:true,changed:true},performance.now()));return;}
+    const diff=sceneDifference(pending.signature,this.latest);if(diff.mean>14&&diff.ratio>.20){this.recognizedUntil=0;this.showGate(this.gate.observe({present:true,changed:true},performance.now()));return;}
+    if(data.candidate||data.decision.state==='accept'||data.decision.state==='reject')this.recognizedUntil=performance.now()+1500;else if(data.decision.state==='idle')this.recognizedUntil=0;
     this.showGate(this.gate.result(data.decision,pending,performance.now()),data.inferenceMs);
     // A completed inference can capture its confirmation immediately. Recognition
     // must not wait for a throttled animation frame or the display refresh rate.
@@ -72,10 +74,13 @@ export class DlcEngine {
   if(this.pending&&now-this.pending.watchdogAt>4500){this.lease?.recover('A material check stalled. Restarting detection while the camera stays open.');return;}
   const w=this.video.videoWidth,h=this.video.videoHeight,side=Math.min(w,h)*.70;if(!side)return;this.context.drawImage(this.video,(w-side)/2,(h-side)/2,side,side,0,0,224,224);const image=this.context.getImageData(0,0,224,224),signature=frameSignature(image.data);this.latest=signature;
   if(!this.baseline){const difference=this.previous?sceneDifference(signature,this.previous):{mean:255};this.stableFrames=difference.mean<5?this.stableFrames+1:0;this.previous=signature;if(this.stableFrames>=10){this.baseline=signature;this.previous=signature;this.showGate(this.gate.reset());}return;}
-  const background=sceneDifference(signature,this.baseline),present=background.mean>12&&background.ratio>.10,change=this.previous?sceneDifference(signature,this.previous):{mean:0,ratio:0};this.previous=signature;
-  const state=this.gate.observe({present,changed:present&&change.mean>16&&change.ratio>.23},now);this.showGate(state);
-  if(!present||state.state==='reject'||this.pending||now-this.lastSent<110)return;this.lastSent=now;const id=++this.requestId;this.pending={id,scene:this.gate.scene,capturedAt:now,watchdogAt:now,signature};this.lease?.send({type:'frame',...this.pending,pixels:image.data.buffer});
+  const background=sceneDifference(signature,this.baseline),rawPresent=background.mean>12&&background.ratio>.10,change=this.previous?sceneDifference(signature,this.previous):{mean:0,ratio:0};this.previous=signature;
+  const changed=change.mean>16&&change.ratio>.23;if(changed){this.recognizedUntil=0;this.visualScene++;}
+  const present=rawPresent||this.recognizedUntil>now;
+  const state=this.gate.observe({present,changed:present&&changed},now);this.showGate(state);
+  if(this.pending||now-this.lastSent<(present?180:500))return;this.lastSent=now;const id=++this.requestId;this.pending={id,scene:this.gate.scene,visualScene:this.visualScene,capturedAt:now,watchdogAt:now,signature};this.lease?.send({type:'frame',...this.pending,pixels:image.data.buffer});
  }
+ retryDetector(){this.recognizedUntil=0;this.gate.reset();this.lease?.retry();}
  stop(announce=true){
   this.running=false;this.generation++;cancelAnimationFrame(this.frame);this.lease?.release();this.lease=null;this.workerReady=false;this.pending=null;
   if(this.reconnectTimer)clearTimeout(this.reconnectTimer);this.reconnectTimer=null;

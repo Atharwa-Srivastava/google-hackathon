@@ -1,0 +1,19 @@
+{
+  "revision": "48b10fa505aeb51fbd127fc60a5c660040e823b7",
+  "models": [
+    {
+      "file": "dlc-palm.onnx",
+      "source": "palm_detection_mediapipe/palm_detection_mediapipe_2023feb_int8.onnx",
+      "bytes": 1157004,
+      "sha256": "9f014de96ef5b6816b3eb9a5fed21a7371ef0f104ea440aa19ce9129fe2af5f6"
+    },
+    {
+      "file": "dlc-face.onnx",
+      "source": "face_detection_yunet/face_detection_yunet_2023mar.onnx",
+      "bytes": 232557,
+      "sha256": "beb05bf2378aee45cd7c41056da07265b7bb91041ed1b06f923819a9c744ec36",
+      "originalSha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+      "inputSize": 320
+    }
+  ]
+}

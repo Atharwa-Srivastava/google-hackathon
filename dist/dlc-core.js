@@ -19,35 +19,55 @@ export function classifyDlc({material='',confidence=0,margin=0,threshold=1.01,si
  if(material==='plastic'&&objects.some(d=>rigid.has(d.class)&&d.score>=.55))return {state:'accept',label:'Rigid plastic packaging',reason:'Rigid packaging matches R1. Empty, rinse, dry and separate lids.',rule:'R1',confidence};
  return {state:'checking',label:material?material[0].toUpperCase()+material.slice(1)+' needs a check':'Not verified',reason:'The material alone does not prove that this bin accepts the object.',rule:'',confidence};
 }
+const paperTypes=new Set(['normal paper','magazine paper','corrugated carton','paper bag','toilet tube','egg carton']);
+export function selectDlcTarget(detections=[],human={faces:[],palms:[]}){
+ const hasHuman=(human.faces?.length||0)+(human.palms?.length||0)>0;
+ return detections.map(d=>({...d,class:String(d.class).toLowerCase()})).filter(d=>{
+  if(!Array.isArray(d.bbox)||d.bbox.length!==4||d.bbox.some(x=>!Number.isFinite(x))||d.score<(hasHuman?.72:.50))return false;
+  const [x,y,w,h]=d.bbox;if(w<=0||h<=0||w*h<.015||w*h>.92)return false;
+  if(!rigid.has(d.class)&&!cans.has(d.class)&&!unsafe.has(d.class)&&!paperTypes.has(d.class)&&d.class!=='shoe')return false;
+  for(const [boxes,limit] of [[human.faces||[],.35],[human.palms||[],.65]])for(const box of boxes){const b=box.bbox,overlap=Math.max(0,Math.min(x+w,b[0]+b[2])-Math.max(x,b[0]))*Math.max(0,Math.min(y+h,b[1]+b[3])-Math.max(y,b[1]));if(overlap/(w*h)>limit)return false;}
+  return true;
+ }).sort((a,b)=>b.score-a.score)[0]||null;
+}
+export function resolveDlcScene(prediction,target,human={faces:[],palms:[]}){
+ const hasHuman=(human.faces?.length||0)+(human.palms?.length||0)>0;
+ if(hasHuman&&!target||['clothes','shoes','trash'].includes(prediction.material)&&(!target||hasHuman))return {state:'idle',label:hasHuman?'People and hands ignored':'Show only the waste item',reason:'No separate waste item is confirmed. Keep the item in the square; do not drop until green.',rule:''};
+ if(prediction.similarity<prediction.minSimilarity)return {state:'checking',label:'Item not confirmed',reason:'Bring the waste closer and keep the background outside the square.',rule:''};
+ if(!target&&['battery','biological','glass'].includes(prediction.material)&&(prediction.confidence<.96||prediction.margin<.35))return {state:'checking',label:'Need a clearer item view',reason:'Still checking. Uncertainty is not a wrong-bin decision.',rule:''};
+ return classifyDlc({...prediction,detections:target?[target]:[]});
+}
 export class DlcDecisionGate{
- constructor({budget=DLC_BUDGET_MS,fresh=DLC_FRESH_MS}={}){this.budget=budget;this.fresh=fresh;this.reset();}
- reset(){this.started=null;this.scene=(this.scene??0)+1;this.timedOut=false;this.candidate='';this.hits=0;this.lastResult=-Infinity;this.last=null;this.state={state:'idle',label:'Ready for the next item',reason:'Show one item inside the inspection area.',rule:'',elapsed:0};return this.state;}
+ constructor({budget=DLC_BUDGET_MS,fresh=DLC_FRESH_MS}={}){this.budget=budget;this.fresh=fresh;this.scene=0;this.reset();}
+ reset(){this.started=null;this.scene++;this.ignored=false;this.candidate='';this.hits=0;this.lastResult=-Infinity;this.lastCaptured=-Infinity;this.last=null;this.state={state:'idle',label:'Ready for the next item',reason:'Show one waste item inside the square. People and hands are ignored.',rule:'',elapsed:0};return this.state;}
  observe({present,changed=false},now){
-  if(!present)return this.reset();
-  if(this.started===null){this.started=now;this.scene++;this.state={state:'checking',label:'Checking the item',reason:'Hold one item steady inside the square.',rule:'',elapsed:0};}
-  if(changed){this.scene++;this.candidate='';this.hits=0;this.last=null;this.state={state:'checking',label:'Checking this view',reason:'Keep the item steady.',rule:'',elapsed:now-this.started};}
-  if(this.last&&this.state.state!=='reject'&&now-this.lastResult>this.fresh){if(this.state.state==='accept')this.started=now;this.last=null;this.hits=0;this.candidate='';this.state={state:'checking',label:'Checking current item',reason:'The previous decision is no longer fresh.',rule:'',elapsed:now-this.started};}
-  if(now-this.started>=this.budget&&this.state.state!=='accept'&&this.state.state!=='reject'){this.timedOut=true;this.state={state:'reject',label:'Not verified — do not drop',reason:'No reliable accepted match within two seconds. Remove the item and use the normal scanner.',rule:'',elapsed:now-this.started,uncertain:true};}
+  if(!present){if(this.started!==null||this.state.state!=='idle')return this.reset();return this.state;}
+  if(this.started===null){this.started=now;this.scene++;}
+  if(changed){this.scene++;this.started=now;this.ignored=false;this.last=null;this.candidate='';this.hits=0;this.state={state:'checking',label:'Checking this view',reason:'Hold the item steady. Do not drop until green.',rule:'',elapsed:0};}
+  if(this.ignored)return this.state;
+  if(this.last&&now-this.lastResult>this.fresh){this.last=null;this.candidate='';this.hits=0;this.started=now;this.state={state:'checking',label:'Rechecking the item',reason:'The last result expired. Keep the item visible; do not drop yet.',rule:'',elapsed:0};}
+  if(this.state.state==='idle')this.state={state:'checking',label:'Looking for waste',reason:'Show one item clearly. Do not drop until green.',rule:'',elapsed:now-this.started};
+  if(now-this.started>=this.budget&&this.state.state!=='accept'&&this.state.state!=='reject')this.state={state:'checking',label:'Not clear yet',reason:'Bring only the waste closer to the square. Still checking; do not drop yet.',rule:'',elapsed:now-this.started,uncertain:true};
   return this.state;
  }
  result(result,{capturedAt,scene},now){
-  if(this.started===null||this.timedOut||scene!==this.scene||now-capturedAt>this.fresh)return this.state;
-  if(this.state.state==='reject')return this.state;
-  if(now-this.started>=this.budget&&this.state.state!=='accept'&&this.state.state!=='reject')return this.observe({present:true},now);
+  if(scene!==this.scene||!Number.isFinite(capturedAt)||capturedAt>now||now-capturedAt>this.fresh||capturedAt<=this.lastCaptured)return this.state;this.lastCaptured=capturedAt;
+  if(result.state==='idle'){this.ignored=true;this.started=now;this.last=null;this.candidate='';this.hits=0;this.state={...result,elapsed:0,rule:''};return this.state;}
+  if(this.started===null||this.ignored){this.started=now;this.ignored=false;}
+  if(this.state.state==='accept'&&result.state!=='accept'||this.state.state==='reject'&&result.state!=='reject')this.started=now;
   this.lastResult=now;this.last=result;
-  if(result.state==='reject'){this.candidate='';this.hits=0;const elapsed=this.state.state==='reject'?this.state.elapsed:now-this.started;this.state={...result,elapsed};return this.state;}
-  if(result.state==='accept'){
-   const key=result.label+'|'+result.rule;this.hits=this.candidate===key?this.hits+1:1;this.candidate=key;
-   const elapsed=this.state.state==='accept'&&this.state.label===result.label?this.state.elapsed:now-this.started;
-   this.state=this.hits>=2?{...result,elapsed}:{state:'checking',label:'Confirming '+result.label.toLowerCase(),reason:'One more matching view before green.',rule:result.rule,elapsed:now-this.started};return this.state;
+  if(result.state==='accept'||result.state==='reject'){
+   const key=result.state+'|'+result.label+'|'+result.rule;this.hits=this.candidate===key?this.hits+1:1;this.candidate=key;
+   if(this.hits>=2){const same=this.state.state===result.state&&this.state.label===result.label;this.state={...result,elapsed:same?this.state.elapsed:now-this.started};}
+   else this.state={state:'checking',label:'Confirming '+result.label.toLowerCase(),reason:'Checking a second fresh view. Do not drop yet.',rule:'',elapsed:now-this.started};
+   return this.state;
   }
-  if(this.state.state==='accept')this.started=now;
-  this.candidate='';this.hits=0;if(this.state.state!=='reject')this.state={...result,elapsed:now-this.started};return this.observe({present:true},now);
+  this.candidate='';this.hits=0;this.state={...result,elapsed:now-this.started};return this.observe({present:true},now);
  }
 }
 export function frameSignature(pixels,size=224){const out=[];for(let y=4;y<size;y+=8)for(let x=4;x<size;x+=8){const p=(y*size+x)*4;out.push(pixels[p],pixels[p+1],pixels[p+2]);}return out;}
 export function sceneDifference(a,b){if(!a||a.length!==b?.length)return {mean:255,ratio:1};let total=0,changed=0;for(let i=0;i<a.length;i+=3){const delta=(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]))/3;total+=delta;if(delta>22)changed++;}return {mean:total/(a.length/3),ratio:changed/(a.length/3)};}
-export function canReusePackaging(cache,frame){if(!cache||!frame||cache.scene!==frame.scene||frame.capturedAt<cache.capturedAt||frame.capturedAt-cache.capturedAt>1600)return false;const difference=sceneDifference(cache.signature,frame.signature);return difference.mean<6&&difference.ratio<.10;}
+export function canReusePackaging(cache,frame){if(!cache||!frame||cache.scene!==frame.scene||frame.capturedAt<cache.capturedAt||frame.capturedAt-cache.capturedAt>6000)return false;const difference=sceneDifference(cache.signature,frame.signature);return difference.mean<6&&difference.ratio<.10;}
 export function predictMaterial(features,head){
  if(features.length!==head.featureCount)throw Error('DLC model and material head do not match.');
  const scores=head.weights.map((row,c)=>{let sum=head.bias[c];for(let i=0;i<features.length;i++)sum+=((features[i]-head.featureMean[i])/head.featureScale[i])*row[i];return sum;});
