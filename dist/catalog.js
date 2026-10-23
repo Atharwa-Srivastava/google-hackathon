@@ -17,4 +17,25 @@ export const items = [
 ['Rigid plastic container','Rigid plastic','R1','rigid plastic container tub'],
 ['Plastic bottle cap','Rigid plastic','R1','plastic bottle cap']
 ]).map(([name,material,rule,keywords])=>({name,material,rule,keywords}));
-export function matchItems(text){const t=text.toLowerCase().trim();if(!t)return [];const exact=items.find(i=>i.name.toLowerCase()===t);if(exact)return [exact];return items.filter(i=>t.includes(i.name.toLowerCase())||i.keywords.split(' ').some(w=>w.length>2&&new RegExp('\\b'+w+'s?\\b').test(t)));}
+// Recognition vocabulary is distinct from training data and from collection policy.
+const additions = [
+['Food scraps','Organic fruit and vegetable scraps','R5',`Apple core|Potato peel|Carrot peel|Onion skin|Garlic skin|Cucumber peel|Watermelon rind|Mango peel|Papaya peel|Pineapple skin|Avocado peel|Fruit seeds|Corn cob|Cabbage leaves|Lettuce scraps|Tomato scraps|Broccoli stalk|Pea pods|Coconut flesh|Lemon peel`],
+['Paper and cardboard','Clean, dry, uncoated paper or cardboard','R2',`Clean office paper|Clean notebook paper|Clean envelope|Clean brown wrapping paper|Clean paper shopping bag|Cereal box|Shoe box|Delivery box|Toilet roll tube|Kitchen roll tube|Clean cardboard sleeve|Clean paper packaging|Clean cardboard tray|Clean paper tag|Clean uncoated paper plate`],
+['Plastic packaging','Empty rigid plastic packaging','R1',`Shampoo bottle|Conditioner bottle|Body wash bottle|Liquid soap bottle|Milk plastic bottle|Juice plastic bottle|Cooking oil plastic bottle|Ice cream tub|Margarine tub|Rigid takeaway tub|Rigid plastic punnet|Rigid plastic pot`],
+['Metal and glass','Empty metal packaging','R3',`Soup tin|Bean tin|Pet food tin|Biscuit tin`],
+['Metal and glass','Empty glass container','R4',`Jam jar|Pickle jar|Sauce glass bottle|Perfume glass bottle`],
+['Mixed packaging','Flexible or multilayer packaging','R6',`Chocolate wrapper|Biscuit wrapper|Bread bag|Frozen food bag|Cling film|Milk pouch|Juice pouch|Lined takeaway paper bowl`],
+['E-waste and batteries','Small electrical or electronic device','R8',`Mobile phone|Laptop|Tablet|Phone charger|USB cable|Earphones|Wireless earbuds|Headphones|Computer mouse|Keyboard|Remote control|Power bank|Smartwatch|Digital camera|Calculator|USB flash drive|Memory card|External hard drive|Wi-Fi router|Small speaker|Electric toothbrush|Electric shaver|Hair dryer|Electric iron|Electric kettle|Game controller`],
+['E-waste and batteries','Battery / special waste','R8',`AA battery|AAA battery|Button cell battery|Rechargeable battery`],
+['E-waste and batteries','Light bulb / special waste','R8',`LED bulb|CFL bulb|Incandescent bulb`],
+['Other household items','Not covered by the sample collection guide',null,`Coffee grounds|Dry leaves|Untreated wood chips|Cooked rice|Meat scraps|Dairy leftovers|Compostable bag|Broken glass|Ceramic mug|Old clothes|Shoes|Polystyrene packaging|Aluminium foil|Paint container|Medicine blister pack|Printer ink cartridge|Refrigerator|Washing machine|Television|Used cooking oil`]
+];
+for(const [family,material,rule,names] of additions)for(const name of names.split('|'))items.push({name,material,rule,family,keywords:name.toLowerCase()});
+for(const item of items){
+ item.family ||= item.rule==='R5'?'Food scraps':item.rule==='R8'?'E-waste and batteries':item.rule==='R2'?'Paper and cardboard':item.rule==='R1'?'Plastic packaging':item.rule==='R3'||item.rule==='R4'?'Metal and glass':'Mixed packaging';
+ item.compost = item.rule==='R5'||item.name==='Coffee grounds'?'green':['Dry leaves','Untreated wood chips'].includes(item.name)?'brown':null;
+ item.collectionCovered=!!item.rule;
+}
+// A lined bowl is not explicitly covered by the supplied cup rule.
+const linedBowl=items.find(i=>i.name==='Lined takeaway paper bowl');linedBowl.rule=null;linedBowl.collectionCovered=false;
+export function matchItems(text){const t=text.toLowerCase().trim();if(!t)return [];const exact=items.find(i=>i.name.toLowerCase()===t);if(exact)return [exact];const named=items.filter(i=>t.includes(i.name.toLowerCase()));if(named.length)return named;return items.filter(i=>i.keywords.split(' ').some(w=>w.length>2&&new RegExp('\\b'+w+'s?\\b').test(t)));}

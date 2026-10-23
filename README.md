@@ -30,7 +30,7 @@ No key was supplied during implementation. The hosted site will show AI setup pe
 
 ## Prototype scope
 
-Greenfield Campus is fictional. No real local guide was supplied. `dist/catalog.js` contains a clearly labeled sample guide and 25 supported common items; replace it with approved local policy before real use. The app scans up to 30 visible object groups. Hidden or unsupported objects stay uncertain. Clear supported results receive exact guide passages and save automatically; corrections update only the relevant entry. Use **Try a mixed pile demo** to test without an API key.
+Greenfield Campus is fictional. No real local guide was supplied. `dist/catalog.js` contains a clearly labeled sample guide and 141 curated household entries, including 34 electronics, batteries and bulbs; replace it with approved local policy before real use. The app scans up to 30 visible object groups. Hidden or unsupported objects stay uncertain. Clear supported results receive exact guide passages and save automatically; corrections update only the relevant entry. Use **Try a mixed pile demo** to test without an API key.
 
 The backend limits image request size and applies a basic per-instance request limit. This is a prototype limit, not a distributed production quota system.
 
@@ -72,3 +72,10 @@ The existing live-frame request additionally asks Gemini for individual normaliz
 Additional catalog entries use existing guide rules: Orange peel, Paper bag, Cardboard egg carton, Rigid plastic container and Plastic bottle cap. Pizza boxes still need their condition confirmed.
 
 For browser regression checks, /model-probe uses actual model inference on public litter photos. The Simulate two missed detections button drops two of every three neural results to check tag persistence. Remove waste tests disappearance. Household fixture photos are from the CC BY 4.0 dataset linked by https://github.com/PhucHuwu/YOLOv8_Detecting_and_Classifying_Waste (dataset.v2i.yolov8, Roboflow project phan-vn-khi/dataset-usskc, version 2). The Ask Gemini button uses the local server key only and exercises actual bounding-box responses on these public test images. The fixture and probe routes are never published. Run node scripts/probe-live-tags.mjs [public-image-url] for a controlled API probe without printing credentials.
+## Expanded household library and management plans
+
+The Disposal guide has a searchable 141-item catalog and a JSON download. Exact item names, materials, families and existing sample-guide mappings are shared with the server prompt. Twenty-one uncovered items retain their identity but require a collection check. This is a curated knowledge catalog, not an annotated image dataset or a newly trained camera model.
+
+Photo, text and live results show a grouped management plan with supporting guide passages. Plans recompute after corrections and when reviewing saved results. Composting and electronics reuse information is separately labelled general education with EPA source links; it does not change local collection rules. Try **Try household & e-waste demo** to exercise mixed cardboard, electronics and compostable scraps without using an API key.
+
+The portable catalog is also checked into `data/wastewise-items.json`. `dist/catalog.js` is the application source of truth; keep the JSON export in sync when editing it.
