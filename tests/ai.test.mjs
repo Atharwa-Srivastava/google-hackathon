@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {requestFor,detectItem} from '../dist/ai.js';
+import {providers,requestFor,detectItem} from '../dist/ai.js';
 const config={provider:'apinex',key:'test-key',model:'gemini/3.8-flash',prompt:'Identify this',photo:{data:'data:image/png;base64,YQ==',mime:'image/png'}};
 test('Apinex sends multimodal chat with provider-specific authentication',()=>{const r=requestFor(config);assert.equal(r.url,'https://api.apinex.bond/v1/chat/completions');assert.equal(r.options.headers.Authorization,'Bearer test-key');const b=JSON.parse(r.options.body);assert.equal(b.model,config.model);assert.equal(b.messages[0].content[1].image_url.url,config.photo.data);assert.ok(!r.options.headers['x-goog-api-key']);});
 test('Google sends native Gemini image parts with its own authentication',()=>{const r=requestFor({...config,provider:'google',model:'gemini-3.8-flash'});const b=JSON.parse(r.options.body);assert.equal(r.options.headers['x-goog-api-key'],'test-key');assert.equal(b.contents[0].parts[1].inline_data.data,'YQ==');assert.ok(!r.options.headers.Authorization);});
 test('parses provider JSON and fenced JSON',async()=>{const answer={item:'Coffee cup',certain:true,ruleId:'R6'};const a=await detectItem(config,async()=>({ok:true,json:async()=>({choices:[{message:{content:'```json\n'+JSON.stringify(answer)+'\n```'}}]})}));assert.deepEqual(a,answer);});
 test('invalid keys and unavailable models produce actionable errors',async()=>{for(const [status,match] of [[401,/key rejected/],[404,/Model not found/],[429,/quota/]])await assert.rejects(detectItem(config,async()=>({ok:false,status})),match);});
 test('malformed response never becomes an identification',async()=>{await assert.rejects(detectItem(config,async()=>({ok:true,json:async()=>({choices:[{message:{content:'not json'}}]})})),/unreadable/);});
+test('free Apinex model is the default',()=>assert.equal(providers.apinex.model,'free/gemini-3.8-flash'));
+test('400 includes the upstream rejection while redacting credentials',async()=>{await assert.rejects(detectItem(config,async()=>({ok:false,status:400,text:async()=>JSON.stringify({error:{message:'Image input not supported for model; key test-key'}})})),e=>e.message.includes('Image input not supported')&&!e.message.includes('test-key'));});
+test('HTML errors are not displayed as provider instructions',async()=>{await assert.rejects(detectItem(config,async()=>({ok:false,status:400,text:async()=>'<html>Gateway failure</html>'})),e=>!e.message.includes('<html>'));});
