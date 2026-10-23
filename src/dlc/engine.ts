@@ -29,6 +29,7 @@ export class DlcEngine {
     if(data.type==='restarting'){this.pending=null;this.workerReady=false;this.packagingReady=false;this.gate.reset();this.coverage=data.reason;this.emit({state:this.backgrounded?'background':'loading',label:'Detector is recovering',reason:'The camera stays on. No item is approved while the detector reconnects.',rule:'',elapsed:0});return;}
     if(data.type==='coverage'){const changed=this.packagingReady!==data.packagingReady;this.packagingReady=!!data.packagingReady;this.coverage=data.coverage;if(changed){this.gate.reset();if(this.workerReady&&this.baseline&&!this.backgrounded)this.showGate(this.gate.state);}return;}
     if(data.type==='ready'){this.workerReady=true;this.evaluation=data.evaluation;this.packagingReady=!!data.packagingReady;this.coverage=data.coverage;if(this.backgrounded)return;if(this.baseline)this.showGate(this.gate.reset());else this.calibrate();return;}
+    if(data.type==='packaging-update'||data.type==='tick'){if(this.workerReady&&!this.pending&&!this.backgrounded)this.loop(performance.now());return;}
     if((data.type!=='result'&&data.type!=='skipped')||data.id!==this.pending?.id)return;
     const pending=this.pending;this.pending=null;if(data.type==='skipped'){this.loop(performance.now());return;}if(this.backgrounded||!pending)return;
     const diff=sceneDifference(pending.signature,this.latest);if(diff.mean>14&&diff.ratio>.20){this.showGate(this.gate.observe({present:true,changed:true},performance.now()));return;}
@@ -58,7 +59,7 @@ export class DlcEngine {
  private cameraFailure(error:unknown){this.stop(false);this.emit({state:'error',label:'Camera access is unavailable',reason:(error as DOMException).name==='NotAllowedError'?'Camera permission was denied or revoked. Allow the webcam and tap Start.':(error as Error).message||'Reconnect the camera and tap Start.',rule:'',elapsed:0,inferenceMs:0});}
  visibilityChanged(hidden:boolean){
   this.backgrounded=hidden;if(!this.running)return;this.gate.reset();
-  if(hidden){this.emit({state:'background',label:'Camera remains on',reason:'Detection resumes automatically when you return. No green signal is active in the background.',rule:'',elapsed:0});return;}
+  if(hidden){this.pending=null;this.lease?.send({type:'idle'});this.emit({state:'background',label:'Camera remains on',reason:'Detection resumes automatically when you return. No green signal is active in the background.',rule:'',elapsed:0});return;}
   if(this.pending)this.pending.watchdogAt=performance.now();
   if(this.video.paused&&this.stream)void this.video.play().catch(()=>{});
   if(this.workerReady&&this.baseline)this.showGate(this.gate.state);else if(this.workerReady)this.calibrate();else this.emit({state:'loading',label:'Detector is preparing',reason:'Camera stays on while the local detector becomes ready.',rule:'',elapsed:0});

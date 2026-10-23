@@ -7,7 +7,7 @@ test('DLC keeps the camera through backgrounding, a two-second rejection, and mo
  let now=0,raf=null,color=128,stops=0,cameraRequests=0,releases=0,recoveries=0,callback;
  const views=[],sent=[],video={readyState:4,paused:false,videoWidth:640,videoHeight:480,srcObject:null,play:async()=>{video.paused=false;}};
  const track={label:'Test camera',stop(){stops++;},onended:null},stream={getTracks:()=>[track],getVideoTracks:()=>[track]};
- const runtime={preload(){},acquire(listener){callback=listener;return {send(data){sent.push(data);},release(){releases++;},recover(reason){recoveries++;callback({type:'restarting',reason});}};}};
+ const runtime={preload(){},acquire(listener){callback=listener;return {send(data){if(data.type==='frame')sent.push(data);},release(){releases++;},recover(reason){recoveries++;callback({type:'restarting',reason});}};}};
  set('__dlcRuntimeFixture',runtime);set('document',{hidden:false,createElement:()=>({width:0,height:0,getContext:()=>({drawImage(){},getImageData:()=>({data:new Uint8ClampedArray(224*224*4).fill(color)})})})});
  set('navigator',{userAgent:'Test laptop',mediaDevices:{getUserMedia:async constraints=>{assert.equal(constraints.audio,false);cameraRequests++;return stream;}}});
  set('Worker',class{});set('OffscreenCanvas',class{});set('window',{});set('performance',{now:()=>now});set('requestAnimationFrame',fn=>{raf=fn;return 1;});set('cancelAnimationFrame',()=>{raf=null;});

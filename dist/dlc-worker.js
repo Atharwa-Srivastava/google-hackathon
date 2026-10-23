@@ -1,6 +1,7 @@
 // Fast material inference and independent packaging loading share no blocking queue.
 importScripts('/dlc-assets.js');
-let ortSession,head,context,busy=false,currentSession=0,packagingCache=null,packaging=null,packagingReady=false,packagingPending=null,packageTimer=null,retryTimer=null,packageAttempt=0;
+let ortSession,head,context,busy=false,currentSession=0,packagingCache=null,packaging=null,packagingReady=false,packagingPending=null,packageTimer=null,retryTimer=null,packageAttempt=0,tickTimer=null;
+function startTicks(){if(!tickTimer)tickTimer=setInterval(()=>{if(currentSession>=0&&!busy)self.postMessage({type:'tick',session:currentSession});},100);}
 const sendCoverage=coverage=>self.postMessage({type:'coverage',coverage,packagingReady});
 function startPackaging(){
  if(packaging)return;
@@ -12,11 +13,11 @@ function startPackaging(){
   if(data.type==='fatal'||data.type==='error'){recoverPackaging('Packaging detector is recovering. Camera and material checks remain active.');return;}
   if(data.type!=='result'||data.id!==packagingPending?.id)return;
   clearTimeout(packageTimer);packageTimer=null;const pending=packagingPending;packagingPending=null;
-  if(pending.session===currentSession)packagingCache={scene:pending.scene,capturedAt:pending.capturedAt,signature:pending.signature,detections:data.detections};pending.resolve(data.detections);
+  if(pending.session===currentSession){packagingCache={scene:pending.scene,capturedAt:pending.capturedAt,signature:pending.signature,detections:data.detections};self.postMessage({type:'packaging-update',session:currentSession});}
  };
  worker.onerror=()=>{if(worker===packaging)recoverPackaging('Packaging detector is recovering. Camera stays open.');};
 }
-function recoverPackaging(message){if(packageTimer)clearTimeout(packageTimer);packageTimer=null;packaging?.terminate();packaging=null;packagingReady=false;packagingCache=null;packagingPending?.resolve(null);packagingPending=null;sendCoverage(message);if(!retryTimer)retryTimer=setTimeout(()=>{retryTimer=null;startPackaging();},Math.min(30000,1000*2**Math.min(packageAttempt++,5)));}
+function recoverPackaging(message){if(packageTimer)clearTimeout(packageTimer);packageTimer=null;packaging?.terminate();packaging=null;packagingReady=false;packagingCache=null;packagingPending=null;sendCoverage(message);if(!retryTimer)retryTimer=setTimeout(()=>{retryTimer=null;startPackaging();},Math.min(30000,1000*2**Math.min(packageAttempt++,5)));}
 const ready=(async()=>{
  const modelData=fetch('/dlc-head.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('DLC material head unavailable.');return r.json();});
  // TensorFlow download/compilation cannot block this worker's material model.
@@ -41,20 +42,17 @@ async function run(pixels,frame){
  const {classifyDlc,frameSignature,canReusePackaging}=await import('/dlc-core.js'),prediction=await predict(pixels),early=classifyDlc(prediction);
  if(early.state==='reject')return {prediction,detections:[],decision:early};
  const signature=frameSignature(pixels),scene=frame.session+':'+frame.scene,current={scene,capturedAt:frame.capturedAt,signature};
- let detections;
- if(canReusePackaging(packagingCache,current))detections=packagingCache.detections;
- else if(packagingReady&&!packagingPending){
-  detections=await new Promise(resolve=>{
-   packagingPending={id:frame.id,session:frame.session,...current,resolve};const copy=pixels.slice();packaging.postMessage({type:'frame',id:frame.id,pixels:copy.buffer},[copy.buffer]);
-   packageTimer=setTimeout(()=>recoverPackaging('A packaging check stalled. Restarting it without stopping the camera.'),3500);
-  });
+ const fresh=canReusePackaging(packagingCache,current),detections=fresh?packagingCache.detections:[];
+ if(packagingReady&&!packagingPending&&(!fresh||frame.capturedAt-packagingCache.capturedAt>450)){
+  packagingPending={id:frame.id,session:frame.session,...current};const copy=pixels.slice();packaging.postMessage({type:'frame',id:frame.id,pixels:copy.buffer},[copy.buffer]);
+  packageTimer=setTimeout(()=>recoverPackaging('A packaging check stalled. Restarting it without stopping the camera.'),3500);
  }
- return {prediction,detections:detections||[],decision:detections?classifyDlc({...prediction,detections}):{state:'checking',label:packagingReady?'Checking '+prediction.material:'Packaging model preparing',reason:packagingReady?'Hold the item steady for a packaging check.':'Material checks are active. Wait for packaging verification before dropping dry waste.',rule:''}};
+ return {prediction,detections,decision:fresh?classifyDlc({...prediction,detections}):{state:'checking',label:packagingReady?'Checking '+prediction.material:'Packaging model preparing',reason:packagingReady?'Hold the item steady for a packaging check.':'Material checks are active. Wait for packaging verification before dropping dry waste.',rule:''}};
 }
 self.onmessage=async({data})=>{
- if(data.type==='dispose'){if(retryTimer)clearTimeout(retryTimer);if(packageTimer)clearTimeout(packageTimer);packaging?.terminate();self.close();return;}
- if(data.type==='idle'){currentSession=-1;packagingCache=null;context?.clearRect(0,0,224,224);return;}
- if(data.type!=='frame')return;if(busy){self.postMessage({type:'skipped',id:data.id,session:data.session});return;}busy=true;currentSession=data.session;
+ if(data.type==='dispose'){if(tickTimer)clearInterval(tickTimer);if(retryTimer)clearTimeout(retryTimer);if(packageTimer)clearTimeout(packageTimer);packaging?.terminate();self.close();return;}
+ if(data.type==='idle'){if(tickTimer)clearInterval(tickTimer);tickTimer=null;currentSession=-1;packagingCache=null;context?.clearRect(0,0,224,224);return;}
+ if(data.type!=='frame')return;if(busy){self.postMessage({type:'skipped',id:data.id,session:data.session});return;}busy=true;currentSession=data.session;startTicks();
  try{await ready;if(!ortSession)return;const tick=performance.now(),result=await run(new Uint8ClampedArray(data.pixels),data);if(currentSession===data.session)self.postMessage({type:'result',id:data.id,session:data.session,scene:data.scene,capturedAt:data.capturedAt,inferenceMs:performance.now()-tick,...result});}
  catch(error){self.postMessage({type:'fatal',error:error.message||'DLC detection failed.'});}finally{busy=false;}
 };

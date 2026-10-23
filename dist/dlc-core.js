@@ -26,7 +26,7 @@ export class DlcDecisionGate{
   if(!present)return this.reset();
   if(this.started===null){this.started=now;this.scene++;this.state={state:'checking',label:'Checking the item',reason:'Hold one item steady inside the square.',rule:'',elapsed:0};}
   if(changed){this.scene++;this.candidate='';this.hits=0;this.last=null;this.state={state:'checking',label:'Checking this view',reason:'Keep the item steady.',rule:'',elapsed:now-this.started};}
-  if(this.last&&this.state.state!=='reject'&&now-this.lastResult>this.fresh){this.last=null;this.hits=0;this.candidate='';this.state={state:'checking',label:'Checking current item',reason:'The previous decision is no longer fresh.',rule:'',elapsed:now-this.started};}
+  if(this.last&&this.state.state!=='reject'&&now-this.lastResult>this.fresh){if(this.state.state==='accept')this.started=now;this.last=null;this.hits=0;this.candidate='';this.state={state:'checking',label:'Checking current item',reason:'The previous decision is no longer fresh.',rule:'',elapsed:now-this.started};}
   if(now-this.started>=this.budget&&this.state.state!=='accept'&&this.state.state!=='reject'){this.timedOut=true;this.state={state:'reject',label:'Not verified — do not drop',reason:'No reliable accepted match within two seconds. Remove the item and use the normal scanner.',rule:'',elapsed:now-this.started,uncertain:true};}
   return this.state;
  }
@@ -41,6 +41,7 @@ export class DlcDecisionGate{
    const elapsed=this.state.state==='accept'&&this.state.label===result.label?this.state.elapsed:now-this.started;
    this.state=this.hits>=2?{...result,elapsed}:{state:'checking',label:'Confirming '+result.label.toLowerCase(),reason:'One more matching view before green.',rule:result.rule,elapsed:now-this.started};return this.state;
   }
+  if(this.state.state==='accept')this.started=now;
   this.candidate='';this.hits=0;if(this.state.state!=='reject')this.state={...result,elapsed:now-this.started};return this.observe({present:true},now);
  }
 }
