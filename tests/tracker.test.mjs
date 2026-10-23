@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ObjectTracker,coverBox} from '../dist/object-tracker.js';
+import {classifyWasteObject} from '../dist/waste-rules.js';
+const det=(x,key='plastic')=>({key,info:{label:key},bbox:[x,50,40,80],score:.9});
+test('multiple same-class objects retain separate IDs as they move',()=>{const t=new ObjectTracker();t.update([det(10),det(180)],0);const r=t.update([det(185),det(15)],100);assert.equal(r.length,2);assert.equal(r.find(o=>o.target[0]===15).id,1);assert.equal(r.find(o=>o.target[0]===185).id,2);});
+test('labels disappear on first empty detection and cannot hang on frozen inference',()=>{const t=new ObjectTracker();t.update([det(10)],0);t.update([det(11)],100);assert.equal(t.visible(200).length,1);assert.equal(t.visible(601).length,0);t.update([],250);assert.equal(t.visible(250).length,0);});
+test('a single spurious prediction never becomes a visible tag',()=>{const t=new ObjectTracker();assert.equal(t.update([det(10)],0).length,0);});
+test('object-fit cover projection matches portrait camera cropping',()=>{assert.deepEqual(coverBox([160,0,320,480],640,480,320,480),[0,0,320,480]);});
+test('all normal objects remain excluded and unknown disposal rules stay neutral',()=>{for(const item of ['person','hand','face','chair','couch','dining table','fork','book','phone','tupperware','shoe'])assert.equal(classifyWasteObject(item).recognized,false,item);assert.equal(classifyWasteObject('pizza box').category,'Needs confirmation');assert.equal(classifyWasteObject('glass bottle').bin,'Glass collection');});

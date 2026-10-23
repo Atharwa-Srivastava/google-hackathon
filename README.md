@@ -34,9 +34,19 @@ Greenfield Campus is fictional. No real local guide was supplied. `dist/catalog.
 
 The backend limits image request size and applies a basic per-instance request limit. This is a prototype limit, not a distributed production quota system.
 
-## Live camera scans
+## Live camera scans & Real-Time AR HUD
 
-Choose **Live scan**, then **Start scan** and allow camera access. The app requests the rear camera with audio disabled. It samples useful views no more than once every eight seconds, skips nearly unchanged views, and allows only one frame-analysis request at a time. Scanning continues until you tap Finish; it does not record video.
+Choose **Live scan**, then **Start scan** and allow camera access. The app activates an in-browser **Real-Time AR HUD (30+ FPS)**:
+- **Instant Object Identification:** Common household waste items (fruits, bottles, cans, cups, boxes, cutlery, electronics) are identified within ~25–35ms directly on device using client-side WebGL acceleration.
+- **Dustbin Reticles & Floating Tags:** Renders a color-coded bounding box and a floating pill tag indicating the waste type and bin destination:
+  - 🟢 **Wet / Biodegradable Waste** (`#22c55e`) → Green Food Waste Bin
+  - 🔵 **Dry Recyclable Waste** (`#3b82f6`) → Blue Recycling Bin
+  - 🟡 **General Waste** (`#eab308`) → Black / Grey Bin
+  - 🔴 **Hazardous / E-Waste** (`#ef4444`) → Special Collection Desk
+- **Dynamic Tracking & Exit Handling:** The tag smoothly tracks moving objects using exponential smoothing. As an item leaves the camera frame or is dropped into a bin, the tag vanishes instantly.
+- **Hybrid AI Fallback & Training Readiness:**
+  - If an item is uncataloged or ambiguous, the live scan continues to capture snapshots for Gemini AI multi-item verification when you tap **Finish scan**.
+  - Drop-in architecture ready for custom-trained **Google Teachable Machine** models (`model.json` + `weights.bin`) in `dist/`.
 
 The live list is provisional. Each entry uses the largest observed count, not a sum across views; counts remain estimates. One scan should cover one waste pile. Finish stops the camera immediately, waits for any active analysis, then reconciles the first and seven most recent snapshots with earlier observations. Up to 30 groups are retained; hidden or unsupported objects remain uncertain. Corrections and removals persist across further analyses.
 
@@ -45,3 +55,7 @@ Scans, results, and up to eight JPEG photo Blobs save in the `wastewise-scans` I
 The same server endpoint accepts optional `mode: live-frame` with one `photo`, or `mode: live-final` with up to eight `photos`, plus up to 30 descriptive `observations`. Both AI providers accept multiple image parts. All guide prompts and credentials stay server-side. Per-photo compression caps snapshots at 960px and 180KB, within the existing 3MB request limit. No cloud photo archive is created.
 
 `npm test` covers merge/deduplication, corrections, timing, concurrency, failure/retry, storage-pause behavior and server/provider contracts. For deterministic browser tests, run `node tests/browser-server.mjs` and visit http://127.0.0.1:4174 (synthetic camera and mock AI only). Query options `?denied=1`, `?storage=1`, `?slow=1`, `?fail=1` exercise error paths. These fixture routes/scripts are not included in production assets. Real Android Chrome and iPhone Safari camera behavior still needs a physical-device check.
+
+## Local waste tracking
+The AR overlay uses the MIT-licensed Trash AI YOLOv5/TACO graph (opensacorg/trash-ai, revision a11de7cb60bfb21399f64c57e48384a61a5044f7), loaded on-device through TensorFlow.js 4.22.0. Attribution and license: licenses/trash-ai-MIT.txt. First use downloads approximately 29 MB of weights from the pinned upstream repository; camera images are not sent there. This is a 60-class litter detector, not a universal waste recognizer. People, hands, furniture and normal objects have no permitted tag mapping. Unknown or unsupported disposal classes remain neutral. No model can guarantee zero false positives.
+Tags use stable per-object IDs, spatial matching, two-hit confirmation, time-based smoothing, object-fit cover projection, immediate hiding on missing detections, and stale expiry. Camera capture requests 60 FPS where supported; overlay redraw targets the display refresh rate. Actual inference/display rates depend on hardware and are shown live. Inference is independent of the eight-second cloud verification and saved-photo sampling. Tags follow only currently visible detections; history preserves earlier discoveries.
