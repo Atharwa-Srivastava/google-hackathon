@@ -9,7 +9,7 @@ export async function visionAsset(path){
  try{const upstream=await fetch(url,{signal:AbortSignal.timeout(45000)});if(!upstream.ok)return new Response('Detector asset unavailable',{status:502});return new Response(upstream.body,{headers:{'Content-Type':path.endsWith('.js')?'text/javascript':path.endsWith('.json')?'application/json':'application/octet-stream','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'}});}catch{return new Response('Detector download failed',{status:502});}
 }
 export function createWorker(assets,handleApi){return {async fetch(request,env){
- const url=new URL(request.url);if(url.pathname.startsWith('/vision/')){if(request.method!=='GET')return new Response('Method not allowed',{status:405});return visionAsset(url.pathname);}if(url.pathname.startsWith('/api/'))return handleApi(request,env);
+ const url=new URL(request.url);if(url.pathname.startsWith('/vision/')){if(request.method!=='GET')return new Response('Method not allowed',{status:405});return visionAsset(url.pathname);}if(url.pathname==='/api'||url.pathname.startsWith('/api/')||url.pathname==='/dashboard'||url.pathname==='/action')return handleApi(request,env);
  if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
  const file=assets[url.pathname==='/'?'/index.html':url.pathname];if(!file)return new Response('Not found',{status:404});
  return new Response(request.method==='HEAD'?null:file.body,{headers:{'Content-Type':file.type,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'}});

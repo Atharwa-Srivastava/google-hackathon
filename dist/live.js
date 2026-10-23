@@ -17,8 +17,8 @@ export function initLiveScan({navigate,isReady,onCount}){
    canvas,
    onDetect:(detected)=>{
     if(stream&&engine?.scan.status==='scanning'){
-     $('#liveNow').textContent=detected.length?detected.map(d=>(d.uncertain?'Possible ':'')+d.label+' · '+d.dustbin).join(' | '):'No supported waste visible';
-     const catalogMap={'clear plastic bottle':'Plastic bottle','other plastic bottle':'Plastic bottle','glass bottle':'Glass bottle','glass jar':'Glass jar','drink can':'Drink can','food can':'Food tin','paper cup':'Coffee cup','drink carton':'Drink carton','crisp packet':'Snack wrapper','plastic film':'Plastic bag','single-use carrier bag':'Plastic bag','plastic lid':'Plastic lid','battery':'Battery','orange peel':'Orange peel','plastic bottle cap':'Plastic bottle cap','banana peel':'Banana peel','vegetable scraps':'Vegetable scraps','eggshells':'Eggshells','tea leaves':'Tea leaves','corrugated carton':'Cardboard box','cardboard':'Cardboard box','pizza box':'Pizza box','normal paper':'Newspaper','tissues':'Used tissue'};
+     $('#liveNow').textContent=detected.length?detected.map(d=>(d.uncertain?'Possible ':'')+d.label+' · '+(d.dustbin==='Biodegradable'?'Wet Waste · Green Bin':d.dustbin)).join(' | '):'No supported waste visible';
+     const catalogMap={'clear plastic bottle':'Plastic bottle','other plastic bottle':'Plastic bottle','glass bottle':'Glass bottle','glass jar':'Glass jar','drink can':'Drink can','food can':'Food tin','paper cup':'Coffee cup','drink carton':'Drink carton','crisp packet':'Snack wrapper','plastic film':'Plastic bag','single-use carrier bag':'Plastic bag','plastic lid':'Plastic lid','battery':'Battery','orange peel':'Orange peel','plastic bottle cap':'Plastic bottle cap','banana peel':'Banana peel','vegetable scraps':'Vegetable scraps','eggshells':'Eggshells','tea leaves':'Tea leaves','corrugated carton':'Cardboard box','cardboard':'Cardboard box','pizza box':'Pizza box','normal paper':'Newspaper','tissues':'Used tissue','wet waste':'Vegetable scraps','organic waste':'Vegetable scraps','kitchen waste':'Vegetable scraps','food waste':'Vegetable scraps'};
      if(detected.length){const grouped=new Map();for(const d of detected){const key=(d.catalog||catalogMap[d.rawClass])||d.label;const item=items.find(i=>i.name===(d.catalog||catalogMap[d.rawClass]));const old=grouped.get(key);grouped.set(key,{item:item?.name||null,label:d.label,ruleId:item?.rule||null,certain:!!item&&!d.uncertain,quantity:(old?.quantity||0)+1});}engine.scan.entries=mergeObservations(engine.scan.entries,{items:[...grouped.values()]},engine.scan.dismissed);engine.checkpoint();}
      if(detected.length>0){
       if(detected.length!==lastTagCount){
@@ -27,7 +27,7 @@ export function initLiveScan({navigate,isReady,onCount}){
       }
       const top=detected[0];
       if(top&&top.label!==lastTopLabel){
-       $('#liveMessage').textContent=`Visible now: ${top.label} · ${top.dustbin}. ${top.note}`;
+       $('#liveMessage').textContent=`Visible now: ${top.label} · ${top.dustbin==='Biodegradable'?'Wet Waste (Green Bin)':top.dustbin}. ${top.note}`;
        lastTopLabel=top.label;
       }
      }else{

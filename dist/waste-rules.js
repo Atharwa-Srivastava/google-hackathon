@@ -58,12 +58,36 @@ Object.assign(ITEM_CLASSIFICATIONS,{
  'eggshells':{category:'WET',label:'Eggshells',catalog:'Eggshells'},
  'tea leaves':{category:'WET',label:'Loose tea leaves',catalog:'Tea leaves'},
  'bottle':{category:'CHECK',label:'Bottle · verify material',family:'bottle',uncertain:true},
- 'cup':{category:'CHECK',label:'Cup · verify lining',family:'cup',uncertain:true}
- ,'rigid plastic container':{category:'DRY_RECYCLABLE',label:'Rigid plastic container',catalog:'Rigid plastic container'}
- ,'cardboard egg carton':{category:'DRY_RECYCLABLE',label:'Cardboard egg carton',catalog:'Cardboard egg carton',tip:'Keep clean and dry. Flatten cardboard. Separate any food-soiled sections.'}
+ 'cup':{category:'CHECK',label:'Cup · verify lining',family:'cup',uncertain:true},
+ 'rigid plastic container':{category:'DRY_RECYCLABLE',label:'Rigid plastic container',catalog:'Rigid plastic container'},
+ 'cardboard egg carton':{category:'DRY_RECYCLABLE',label:'Cardboard egg carton',catalog:'Cardboard egg carton',tip:'Keep clean and dry. Flatten cardboard. Separate any food-soiled sections.'},
+ 'laptop':{category:'HAZARDOUS',label:'Laptop · Special E-waste desk',catalog:'Laptop',family:'electronics',tip:'Laptops and electronics must not go into campus bins. Hand in at the special waste desk.'},
+ 'cell phone':{category:'HAZARDOUS',label:'Cell phone · Special E-waste desk',catalog:'Mobile phone',family:'electronics',tip:'Mobile phones contain rechargeable lithium batteries. Hand in at the special waste desk.'},
+ 'mobile phone':{category:'HAZARDOUS',label:'Mobile phone · Special E-waste desk',catalog:'Mobile phone',family:'electronics',tip:'Hand in at the special waste desk.'},
+ 'phone cover':{category:'GENERAL',label:'Phone cover · General waste',family:'packaging',tip:'Silicone/TPU phone cases cannot be recycled in campus dry recycling. Dispose in general waste.'},
+ 'phone case':{category:'GENERAL',label:'Phone case · General waste',family:'packaging',tip:'Silicone/TPU phone cases cannot be recycled in campus dry recycling. Dispose in general waste.'},
+ 'cover':{category:'GENERAL',label:'Phone/protective cover · General waste'},
+ 'paper':{category:'DRY_RECYCLABLE',label:'Paper · Clean and dry',catalog:'Newspaper',family:'paper',tip:'Clean, dry paper goes in dry recycling. Tear off soiled sections.'},
+ 'tissue':{category:'GENERAL',label:'Tissue paper · General waste',catalog:'Used tissue',family:'soiled_paper',tip:'Used tissues and napkins go in general waste under Rule R7.'},
+ 'tissue paper':{category:'GENERAL',label:'Tissue paper · General waste',catalog:'Used tissue',family:'soiled_paper',tip:'Used tissues and napkins go in general waste under Rule R7.'},
+ 'napkin':{category:'GENERAL',label:'Paper napkin · General waste',catalog:'Used tissue',family:'soiled_paper'},
+ 'coffee cup':{category:'GENERAL',label:'Coffee cup · Mixed lining',catalog:'Coffee cup',family:'cup',tip:'Plastic-lined takeaway paper cup goes in general waste. Separate rigid lid into dry recycling.'},
+ 'takeaway cup':{category:'GENERAL',label:'Takeaway cup · Mixed lining',catalog:'Coffee cup',family:'cup'},
+ 'water bottle':{category:'DRY_RECYCLABLE',label:'Plastic water bottle',catalog:'Plastic bottle',family:'bottle'},
+ 'mouse':{category:'HAZARDOUS',label:'Computer mouse · E-waste',catalog:'Computer mouse',family:'electronics'},
+ 'keyboard':{category:'HAZARDOUS',label:'Keyboard · E-waste',catalog:'Keyboard',family:'electronics'},
+ 'charger':{category:'HAZARDOUS',label:'Phone charger · E-waste',catalog:'Phone charger',family:'electronics'},
+ 'earphones':{category:'HAZARDOUS',label:'Earphones · E-waste',catalog:'Earphones',family:'electronics'},
+ 'wet waste':{category:'WET',label:'Wet waste · Food & Organic',catalog:'Vegetable scraps',tip:'Organic kitchen waste, food scraps, fruit/vegetable peels go in the green bin.'},
+ 'organic waste':{category:'WET',label:'Wet waste · Organic matter',catalog:'Vegetable scraps',tip:'Organic biodegradable waste goes in the green food waste bin.'},
+ 'kitchen waste':{category:'WET',label:'Wet waste · Kitchen scraps',catalog:'Vegetable scraps'},
+ 'food scraps':{category:'WET',label:'Wet waste · Food scraps',catalog:'Vegetable scraps'},
+ 'fruit scraps':{category:'WET',label:'Wet waste · Fruit peels',catalog:'Banana peel'},
+ 'bread':{category:'WET',label:'Bread / food waste · Wet waste',catalog:'Vegetable scraps'},
+ 'rice':{category:'WET',label:'Rice / leftovers · Wet waste',catalog:'Vegetable scraps'}
 });
 for(const raw of ['normal paper','magazine paper','corrugated carton'])ITEM_CLASSIFICATIONS[raw].tip='Clean, dry paper and cardboard go in dry recycling. Flatten boxes. Separate greasy or food-soiled sections into general waste.';
-for(const food of ['banana','apple','orange','broccoli','carrot'])ITEM_CLASSIFICATIONS[food]={category:'WET',label:food[0].toUpperCase()+food.slice(1)+' · if discarded',family:food,uncertain:true,tip:'Food detected. Confirm it is discarded food or scraps before sorting. Remove packaging.'};
+for(const food of ['banana','apple','orange','broccoli','carrot','sandwich','hot dog','donut','cake'])ITEM_CLASSIFICATIONS[food]={category:'WET',label:food[0].toUpperCase()+food.slice(1)+' · Wet Waste',family:food,uncertain:true,tip:'Food detected. Confirm it is discarded food or scraps before sorting. Remove packaging.'};
 for(const raw of ['clear plastic bottle','other plastic bottle','glass bottle'])ITEM_CLASSIFICATIONS[raw].family='bottle';
 ITEM_CLASSIFICATIONS['pizza box'].family='cardboard';ITEM_CLASSIFICATIONS['corrugated carton'].family='cardboard';
 WASTE_CATEGORIES.CHECK={name:'Needs confirmation',bin:'Check local guide',dustbin:'Guide check',color:'#94a3b8',icon:'⚪',glow:'transparent',note:'Material detected; disposal is not confirmed by the guide.'};
@@ -76,7 +100,7 @@ export const NON_WASTE_CLASSES = new Set([
   'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'bird',
   'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'airplane', 'boat',
   'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench',
-  'tv', 'laptop', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator',
+  'tv', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator',
   'umbrella', 'backpack', 'handbag', 'suitcase'
 ]);
 
