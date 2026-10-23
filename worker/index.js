@@ -2,11 +2,12 @@
 export async function visionAsset(path){
  const files=['model.json','name_map.json',...Array.from({length:7},(_,i)=>'group1-shard'+(i+1)+'of7.bin')],household=['model.json',...Array.from({length:5},(_,i)=>'group1-shard'+(i+1)+'of5')];let url;
  if(path==='/vision/tf.min.js')url='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
+ else if(['/vision/dlc/ort.min.js','/vision/dlc/ort-wasm-simd-threaded.mjs','/vision/dlc/ort-wasm-simd-threaded.wasm'].includes(path))url='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/'+path.slice('/vision/dlc/'.length);
  else if(path==='/vision/coco-ssd.min.js')url='https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
  else if(path.startsWith('/vision/household/')&&household.includes(path.slice('/vision/household/'.length)))url='https://storage.googleapis.com/tfjs-models/savedmodel/ssdlite_mobilenet_v2/'+path.slice('/vision/household/'.length);
  else if(path.startsWith('/vision/model/')&&files.includes(path.slice('/vision/model/'.length)))url='https://raw.githubusercontent.com/opensacorg/trash-ai/a11de7cb60bfb21399f64c57e48384a61a5044f7/frontend/public/model/'+path.slice('/vision/model/'.length);
  else return new Response('Not found',{status:404});
- try{const upstream=await fetch(url,{signal:AbortSignal.timeout(45000)});if(!upstream.ok)return new Response('Detector asset unavailable',{status:502});return new Response(upstream.body,{headers:{'Content-Type':path.endsWith('.js')?'text/javascript':path.endsWith('.json')?'application/json':'application/octet-stream','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'}});}catch{return new Response('Detector download failed',{status:502});}
+ try{const upstream=await fetch(url,{signal:AbortSignal.timeout(45000)});if(!upstream.ok)return new Response('Detector asset unavailable',{status:502});return new Response(upstream.body,{headers:{'Content-Type':path.endsWith('.js')||path.endsWith('.mjs')?'text/javascript':path.endsWith('.wasm')?'application/wasm':path.endsWith('.json')?'application/json':'application/octet-stream','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'}});}catch{return new Response('Detector download failed',{status:502});}
 }
 export function createWorker(assets,handleApi){return {async fetch(request,env){
  const url=new URL(request.url);if(url.pathname.startsWith('/vision/')){if(request.method!=='GET')return new Response('Method not allowed',{status:405});return visionAsset(url.pathname);}if(url.pathname==='/api'||url.pathname.startsWith('/api/')||url.pathname==='/dashboard'||url.pathname==='/action')return handleApi(request,env);

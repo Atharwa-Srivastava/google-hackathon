@@ -2,6 +2,10 @@
 
 Mobile-friendly waste sorting with single- and multiple-item photo recognition, guide citations, editable identifications and automatic browser-local history.
 
+## DLC bin camera
+
+Home and Actions now include a **DLC** station: use the laptop webcam as a dry-bin camera, show one item, and get green for a confident accepted material match or red with a rejection beep. Local models warm up before use; two fresh matches are required for green, and unverified items fail closed at a two-second decision target. This uses a newly trained material head from 12,259 local archive images plus packaging evidence. Internal test material classification is 90.8%; webcam disposal accuracy and universal two-second operation are not established. See [DLC setup, policy, training and limitations](docs/dlc.md).
+
 ## Local API configuration
 
 Open `.env` in this project and add your own key:

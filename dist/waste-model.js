@@ -4,7 +4,7 @@ const BASE='/vision/model/';
 let pending;
 const scripts=new Map();
 function loadScript(src){if(scripts.has(src))return scripts.get(src);const p=new Promise((resolve,reject)=>{if(typeof document==='undefined'&&typeof importScripts==='function'){try{importScripts(src);resolve();}catch(e){reject(e);}return;}const s=document.createElement('script');s.src=src;s.crossOrigin='anonymous';s.onload=resolve;s.onerror=()=>{s.remove();scripts.delete(src);reject(Error('Could not download the local detector. Check your connection and retry.'));};document.head.appendChild(s);});scripts.set(src,p);return p;}
-export async function loadWasteModel(){if(pending)return pending;pending=(async()=>{
+export async function loadWasteModel({household:includeHousehold=true}={}){if(pending)return pending;pending=(async()=>{
  const scope=typeof window==='undefined'?globalThis:window;
  if(!scope.tf)await loadScript('/vision/tf.min.js');const tf=scope.tf;try{await tf.setBackend('webgl');}catch{await tf.setBackend('cpu');}await tf.ready();
  const labelsResponse=await fetch(BASE+'name_map.json');if(!labelsResponse.ok)throw Error('Waste labels could not be downloaded.');const labels=await labelsResponse.json();
@@ -12,7 +12,7 @@ export async function loadWasteModel(){if(pending)return pending;pending=(async(
  let household=null,householdError='',cycle=0;
  // The supplemental COCO model adds produce and generic containers. It cannot
  // infer whether intact food is being discarded, or a generic bottle's material.
- if(typeof document!=='undefined'||typeof importScripts==='function')loadScript('/vision/coco-ssd.min.js').then(()=>scope.cocoSsd.load({base:'lite_mobilenet_v2',modelUrl:'/vision/household/model.json'})).then(m=>household=m).catch(()=>{householdError='Household supplement unavailable';});
+ if(includeHousehold&&(typeof document!=='undefined'||typeof importScripts==='function'))loadScript('/vision/coco-ssd.min.js').then(()=>scope.cocoSsd.load({base:'lite_mobilenet_v2',modelUrl:'/vision/household/model.json'})).then(m=>household=m).catch(()=>{householdError='Household supplement unavailable';});
  const foods=new Set(['banana','apple','orange','broccoli','carrot','sandwich','pizza','hot dog','donut','cake']),householdItems=new Set(['bottle','cup','laptop','cell phone','mouse','keyboard']);
  return {name:'Litter + household detectors',get coverage(){return household?'Litter + household models ready':householdError||'Loading household supplement…';},async detect(canvas){
  const input=tf.tidy(()=>tf.image.resizeBilinear(tf.browser.fromPixels(canvas),[640,640]).div(255).expandDims(0));let outputs;
