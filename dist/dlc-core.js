@@ -46,7 +46,7 @@ export class DlcDecisionGate{
 }
 export function frameSignature(pixels,size=224){const out=[];for(let y=4;y<size;y+=8)for(let x=4;x<size;x+=8){const p=(y*size+x)*4;out.push(pixels[p],pixels[p+1],pixels[p+2]);}return out;}
 export function sceneDifference(a,b){if(!a||a.length!==b?.length)return {mean:255,ratio:1};let total=0,changed=0;for(let i=0;i<a.length;i+=3){const delta=(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]))/3;total+=delta;if(delta>22)changed++;}return {mean:total/(a.length/3),ratio:changed/(a.length/3)};}
-export function canReusePackaging(cache,frame){if(!cache||!frame||cache.scene!==frame.scene||frame.capturedAt<cache.capturedAt||frame.capturedAt-cache.capturedAt>900)return false;const difference=sceneDifference(cache.signature,frame.signature);return difference.mean<6&&difference.ratio<.10;}
+export function canReusePackaging(cache,frame){if(!cache||!frame||cache.scene!==frame.scene||frame.capturedAt<cache.capturedAt||frame.capturedAt-cache.capturedAt>1600)return false;const difference=sceneDifference(cache.signature,frame.signature);return difference.mean<6&&difference.ratio<.10;}
 export function predictMaterial(features,head){
  if(features.length!==head.featureCount)throw Error('DLC model and material head do not match.');
  const scores=head.weights.map((row,c)=>{let sum=head.bias[c];for(let i=0;i<features.length;i++)sum+=((features[i]-head.featureMean[i])/head.featureScale[i])*row[i];return sum;});

@@ -1,30 +1,60 @@
-// DLC never uploads camera frames. This dedicated worker owns its inference queue.
-let ortSession,head,litter,busy=false,context,packagingCache=null;
+// Fast material inference and independent packaging loading share no blocking queue.
+importScripts('/dlc-assets.js');
+let ortSession,head,context,busy=false,currentSession=0,packagingCache=null,packaging=null,packagingReady=false,packagingPending=null,packageTimer=null,retryTimer=null,packageAttempt=0;
+const sendCoverage=coverage=>self.postMessage({type:'coverage',coverage,packagingReady});
+function startPackaging(){
+ if(packaging)return;
+ const worker=new Worker('/dlc-packaging-worker.js');packaging=worker;sendCoverage('Material checks start first · packaging model loading in parallel');
+ packageTimer=setTimeout(()=>recoverPackaging('Packaging download is slow. Material checks and camera remain active.'),90000);
+ worker.onmessage=({data})=>{
+  if(worker!==packaging)return;
+  if(data.type==='ready'){clearTimeout(packageTimer);packageTimer=null;packagingReady=true;packageAttempt=0;sendCoverage('All local models ready');return;}
+  if(data.type==='fatal'||data.type==='error'){recoverPackaging('Packaging detector is recovering. Camera and material checks remain active.');return;}
+  if(data.type!=='result'||data.id!==packagingPending?.id)return;
+  clearTimeout(packageTimer);packageTimer=null;const pending=packagingPending;packagingPending=null;
+  if(pending.session===currentSession)packagingCache={scene:pending.scene,capturedAt:pending.capturedAt,signature:pending.signature,detections:data.detections};pending.resolve(data.detections);
+ };
+ worker.onerror=()=>{if(worker===packaging)recoverPackaging('Packaging detector is recovering. Camera stays open.');};
+}
+function recoverPackaging(message){if(packageTimer)clearTimeout(packageTimer);packageTimer=null;packaging?.terminate();packaging=null;packagingReady=false;packagingCache=null;packagingPending?.resolve(null);packagingPending=null;sendCoverage(message);if(!retryTimer)retryTimer=setTimeout(()=>{retryTimer=null;startPackaging();},Math.min(30000,1000*2**Math.min(packageAttempt++,5)));}
 const ready=(async()=>{
+ const modelData=fetch('/dlc-head.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('DLC material head unavailable.');return r.json();});
+ // TensorFlow download/compilation cannot block this worker's material model.
+ startPackaging();
  importScripts('/vision/dlc/ort.min.js');
  self.ort.env.wasm.numThreads=1;self.ort.env.wasm.proxy=false;self.ort.env.wasm.wasmPaths='/vision/dlc/';
- const [metadata,bytes]=await Promise.all([fetch('/dlc-head.json').then(r=>{if(!r.ok)throw Error('DLC material head unavailable.');return r.json();}),fetch('/dlc-backbone.onnx').then(r=>{if(!r.ok)throw Error('DLC feature model unavailable.');return r.arrayBuffer();})]);head=metadata;
+ head=await modelData;
+ const response=await fetch('/dlc-backbone.onnx?sha='+head.backbone.sha256);if(!response.ok)throw Error('DLC feature model unavailable.');const bytes=await response.arrayBuffer();
  const checksum=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');if(checksum!==head.backbone.sha256)throw Error('DLC model integrity check failed.');
  ortSession=await self.ort.InferenceSession.create(bytes,{executionProviders:['wasm'],graphOptimizationLevel:'all'});
- const {loadWasteModel}=await import('/waste-model.js');litter=await loadWasteModel({household:false});
  const canvas=new OffscreenCanvas(224,224);context=canvas.getContext('2d',{willReadFrequently:true});context.fillStyle='#888';context.fillRect(0,0,224,224);
- await run(new Uint8ClampedArray(context.getImageData(0,0,224,224).data),null,true);
- // Non-empty warm-up also compiles the detector's object post-processing path.
- const {DATASET_SAMPLES}=await import('/sample-dataset.js');
- for(const sample of DATASET_SAMPLES.slice(0,2)){const bitmap=await createImageBitmap(await (await fetch(sample.dataUrl)).blob());context.drawImage(bitmap,0,0,224,224);bitmap.close();await run(new Uint8ClampedArray(context.getImageData(0,0,224,224).data),null,true);}
- self.postMessage({type:'ready',evaluation:head.evaluation,coverage:'Local material head + packaging detector'});
-})().catch(error=>{self.postMessage({type:'fatal',error:error.message||'DLC models could not start.'});throw error;});
-async function run(pixels,frame=null,forcePackaging=false){
+ await predict(context.getImageData(0,0,224,224).data);
+ self.postMessage({type:'ready',evaluation:head.evaluation,packagingReady,coverage:packagingReady?'All local models ready':'Material detector ready · packaging still preparing'});
+})().catch(error=>self.postMessage({type:'fatal',error:error.message||'Material detector could not start.'}));
+async function predict(pixels){
  const input=new Float32Array(3*224*224),mean=head.normalization.mean,std=head.normalization.std;
  for(let i=0;i<224*224;i++)for(let channel=0;channel<3;channel++)input[channel*224*224+i]=(pixels[i*4+channel]/255-mean[channel])/std[channel];
- context.putImageData(new ImageData(pixels,224,224),0,0);
- const tensor=new self.ort.Tensor('float32',input,[1,3,224,224]);let outputs,prediction;
- const {predictMaterial,classifyDlc,frameSignature,canReusePackaging}=await import('/dlc-core.js');
- try{outputs=await ortSession.run({[head.inputName]:tensor});prediction=predictMaterial(outputs[ortSession.outputNames[0]].data,head);}finally{tensor.dispose();if(outputs)for(const value of Object.values(outputs))value.dispose();}
- const early=classifyDlc(prediction);if(!forcePackaging&&early.state==='reject')return {prediction,detections:[],decision:early};
- const current=frame?{scene:frame.scene,capturedAt:frame.capturedAt,signature:frameSignature(pixels)}:null;
- let detections;if(canReusePackaging(packagingCache,current))detections=packagingCache.detections;
- else{const objects=await litter.detect(context.canvas);detections=objects.map(p=>({class:p.class,score:p.score,bbox:p.bbox.map(n=>n/224)}));packagingCache=current?{...current,detections}:null;}
- return {prediction,detections,decision:classifyDlc({...prediction,detections})};
+ const tensor=new self.ort.Tensor('float32',input,[1,3,224,224]);let outputs;
+ try{outputs=await ortSession.run({[head.inputName]:tensor});const {predictMaterial}=await import('/dlc-core.js');return predictMaterial(outputs[ortSession.outputNames[0]].data,head);}finally{tensor.dispose();if(outputs)for(const value of Object.values(outputs))value.dispose();}
 }
-self.onmessage=async({data})=>{if(data.type!=='frame'||busy)return;busy=true;try{await ready;const tick=performance.now(),result=await run(new Uint8ClampedArray(data.pixels),data);self.postMessage({type:'result',id:data.id,scene:data.scene,capturedAt:data.capturedAt,inferenceMs:performance.now()-tick,...result});}catch(error){self.postMessage({type:'error',id:data.id,error:error.message||'DLC detection failed.'});}finally{busy=false;}};
+async function run(pixels,frame){
+ const {classifyDlc,frameSignature,canReusePackaging}=await import('/dlc-core.js'),prediction=await predict(pixels),early=classifyDlc(prediction);
+ if(early.state==='reject')return {prediction,detections:[],decision:early};
+ const signature=frameSignature(pixels),scene=frame.session+':'+frame.scene,current={scene,capturedAt:frame.capturedAt,signature};
+ let detections;
+ if(canReusePackaging(packagingCache,current))detections=packagingCache.detections;
+ else if(packagingReady&&!packagingPending){
+  detections=await new Promise(resolve=>{
+   packagingPending={id:frame.id,session:frame.session,...current,resolve};const copy=pixels.slice();packaging.postMessage({type:'frame',id:frame.id,pixels:copy.buffer},[copy.buffer]);
+   packageTimer=setTimeout(()=>recoverPackaging('A packaging check stalled. Restarting it without stopping the camera.'),3500);
+  });
+ }
+ return {prediction,detections:detections||[],decision:detections?classifyDlc({...prediction,detections}):{state:'checking',label:packagingReady?'Checking '+prediction.material:'Packaging model preparing',reason:packagingReady?'Hold the item steady for a packaging check.':'Material checks are active. Wait for packaging verification before dropping dry waste.',rule:''}};
+}
+self.onmessage=async({data})=>{
+ if(data.type==='dispose'){if(retryTimer)clearTimeout(retryTimer);if(packageTimer)clearTimeout(packageTimer);packaging?.terminate();self.close();return;}
+ if(data.type==='idle'){currentSession=-1;packagingCache=null;context?.clearRect(0,0,224,224);return;}
+ if(data.type!=='frame')return;if(busy){self.postMessage({type:'skipped',id:data.id,session:data.session});return;}busy=true;currentSession=data.session;
+ try{await ready;if(!ortSession)return;const tick=performance.now(),result=await run(new Uint8ClampedArray(data.pixels),data);if(currentSession===data.session)self.postMessage({type:'result',id:data.id,session:data.session,scene:data.scene,capturedAt:data.capturedAt,inferenceMs:performance.now()-tick,...result});}
+ catch(error){self.postMessage({type:'fatal',error:error.message||'DLC detection failed.'});}finally{busy=false;}
+};

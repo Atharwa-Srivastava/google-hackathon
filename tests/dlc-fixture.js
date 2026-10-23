@@ -1,6 +1,6 @@
 // Test-only camera replay. Real DLC models run; no detection responses are mocked.
 let selectedImage=null,simulationStream=null;
-const NativeDlcWorker=window.Worker;window.Worker=class extends NativeDlcWorker{constructor(...args){super(...args);this.addEventListener('message',({data})=>{if(data.type==='result')document.body.dataset.dlcModelResult=JSON.stringify({prediction:data.prediction,decision:data.decision,inferenceMs:data.inferenceMs,detections:data.detections});});}};
+const fixtureWorkers=[];const NativeDlcWorker=window.Worker;window.Worker=class extends NativeDlcWorker{constructor(...args){super(...args);fixtureWorkers.push(this);document.body.dataset.dlcWorkerStarts=String(fixtureWorkers.length);const started=performance.now();this.addEventListener('message',({data})=>{if(data.type==='ready')document.body.dataset.dlcMaterialReadyMs=String(Math.round(performance.now()-started));if((data.type==='coverage'||data.type==='ready')&&data.packagingReady)document.body.dataset.dlcAllReadyMs=String(Math.round(performance.now()-started));if(data.type==='result')document.body.dataset.dlcModelResult=JSON.stringify({prediction:data.prediction,decision:data.decision,inferenceMs:data.inferenceMs,detections:data.detections});});}};
 const cameraCanvas=document.createElement('canvas');cameraCanvas.width=640;cameraCanvas.height=480;const cameraCtx=cameraCanvas.getContext('2d');
 function drawDlcFrame(){cameraCtx.fillStyle='#647084';cameraCtx.fillRect(0,0,640,480);if(selectedImage)cameraCtx.drawImage(selectedImage,152,72,336,336);}
 drawDlcFrame();
@@ -10,3 +10,5 @@ const samples=await import('/sample-dataset.js');for(const sample of samples.DAT
 document.querySelector('#dlcClear').onclick=()=>{selectedImage=null;drawDlcFrame();document.querySelector('#dlcFixtureStatus').textContent='Empty camera replay';};
 const pauseButton=document.createElement('button');pauseButton.textContent='DLC pause test';pauseButton.onclick=()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));setTimeout(()=>Object.defineProperty(document,'hidden',{configurable:true,value:false}),100);};controls.append(pauseButton);
 const denyButton=document.createElement('button');denyButton.textContent='Deny next camera';denyButton.onclick=()=>{Object.defineProperty(navigator.mediaDevices,'getUserMedia',{configurable:true,value:async()=>{throw new DOMException('Test permission denial','NotAllowedError');}});};controls.append(denyButton);
+
+const faultButton=document.createElement("button");faultButton.textContent="DLC model fault";faultButton.onclick=()=>fixtureWorkers.at(-1).dispatchEvent(new ErrorEvent("error",{message:"Controlled worker fault"}));controls.append(faultButton);
