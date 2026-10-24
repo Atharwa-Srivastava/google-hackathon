@@ -13,7 +13,7 @@ function startPackaging(){
   if(data.type==='fatal'||data.type==='error'){recoverPackaging('Packaging detector is recovering. Camera and material checks remain active.');return;}
   if(data.type!=='result'||data.id!==packagingPending?.id)return;
   clearTimeout(packageTimer);packageTimer=null;const pending=packagingPending;packagingPending=null;
-  if(pending.session===currentSession&&latestFrame?.scene===pending.scene){const {sceneDifference}=await import('/dlc-core.js');const diff=sceneDifference(pending.signature,latestFrame.signature);if(diff.mean<6&&diff.ratio<.10){packagingCache={scene:pending.scene,capturedAt:latestFrame.capturedAt,signature:pending.signature,detections:data.detections};self.postMessage({type:'packaging-update',session:currentSession});}}
+  if(pending.session===currentSession&&latestFrame?.scene===pending.scene){const {sceneDifference}=await import('/dlc-core.js');const diff=sceneDifference(pending.signature,latestFrame.signature);if(diff.mean<30&&diff.ratio<.55){packagingCache={scene:pending.scene,capturedAt:latestFrame.capturedAt,signature:pending.signature,detections:data.detections};self.postMessage({type:'packaging-update',session:currentSession});}}
  };
  worker.onerror=()=>{if(worker===packaging)recoverPackaging('Packaging detector is recovering. Camera stays open.');};
 }
@@ -44,7 +44,7 @@ async function run(pixels,frame){
  const {frameSignature,canReusePackaging,sceneDifference,selectDlcTarget,resolveDlcScene}=await import('/dlc-core.js');
  const signature=frameSignature(pixels),scene=frame.session+':'+(frame.visualScene??frame.scene),current={scene,capturedAt:frame.capturedAt,signature};latestFrame=current;
  const fresh=canReusePackaging(packagingCache,current),detections=fresh?packagingCache.detections:[];
- if(packagingReady&&!packagingPending&&(!fresh||frame.capturedAt-packagingCache.capturedAt>3500)){
+ if(packagingReady&&!packagingPending&&(!fresh||frame.capturedAt-packagingCache.capturedAt>750)){
   packagingPending={id:frame.id,session:frame.session,...current};const copy=pixels.slice();packaging.postMessage({type:'frame',id:frame.id,pixels:copy.buffer},[copy.buffer]);
   packageTimer=setTimeout(()=>{sendCoverage('Waste verification is slow; camera stays on.');packageTimer=setTimeout(()=>pausePackaging('Waste verifier paused after a stalled frame. Tap Retry detector.'),12000);},3500);
  }

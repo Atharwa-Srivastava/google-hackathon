@@ -33,7 +33,7 @@ export class DlcEngine {
     if(data.type==='packaging-update'||data.type==='tick'){if(this.workerReady&&!this.pending&&!this.backgrounded)this.loop(performance.now());return;}
     if((data.type!=='result'&&data.type!=='skipped')||data.id!==this.pending?.id)return;
     const pending=this.pending;this.pending=null;if(data.type==='skipped'){this.loop(performance.now());return;}if(this.backgrounded||!pending)return;
-    const diff=sceneDifference(pending.signature,this.latest);if(diff.mean>14&&diff.ratio>.20){this.recognizedUntil=0;this.showGate(this.gate.observe({present:true,changed:true},performance.now()));return;}
+    const diff=sceneDifference(pending.signature,this.latest);if(diff.mean>40&&diff.ratio>.65){this.recognizedUntil=0;this.showGate(this.gate.observe({present:true,changed:true},performance.now()));return;}
     if(data.candidate||data.decision.state==='accept'||data.decision.state==='reject')this.recognizedUntil=performance.now()+1500;else if(data.decision.state==='idle')this.recognizedUntil=0;
     this.showGate(this.gate.result(data.decision,pending,performance.now()),data.inferenceMs);
     // A completed inference can capture its confirmation immediately. Recognition
@@ -75,7 +75,7 @@ export class DlcEngine {
   const w=this.video.videoWidth,h=this.video.videoHeight,side=Math.min(w,h)*.70;if(!side)return;this.context.drawImage(this.video,(w-side)/2,(h-side)/2,side,side,0,0,224,224);const image=this.context.getImageData(0,0,224,224),signature=frameSignature(image.data);this.latest=signature;
   if(!this.baseline){const difference=this.previous?sceneDifference(signature,this.previous):{mean:255};this.stableFrames=difference.mean<5?this.stableFrames+1:0;this.previous=signature;if(this.stableFrames>=10){this.baseline=signature;this.previous=signature;this.showGate(this.gate.reset());}return;}
   const background=sceneDifference(signature,this.baseline),rawPresent=background.mean>12&&background.ratio>.10,change=this.previous?sceneDifference(signature,this.previous):{mean:0,ratio:0};this.previous=signature;
-  const changed=change.mean>16&&change.ratio>.23;if(changed){this.recognizedUntil=0;this.visualScene++;}
+  const changed=change.mean>40&&change.ratio>.65;if(changed){this.recognizedUntil=0;this.visualScene++;}
   const present=rawPresent||this.recognizedUntil>now;
   const state=this.gate.observe({present,changed:present&&changed},now);this.showGate(state);
   if(this.pending||now-this.lastSent<(present?180:500))return;this.lastSent=now;const id=++this.requestId;this.pending={id,scene:this.gate.scene,visualScene:this.visualScene,capturedAt:now,watchdogAt:now,signature};this.lease?.send({type:'frame',...this.pending,pixels:image.data.buffer});

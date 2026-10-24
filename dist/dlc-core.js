@@ -6,6 +6,8 @@ const rigid=new Set(['clear plastic bottle','other plastic bottle','plastic lid'
 const cans=new Set(['drink can','food can']);
 const unsafe=new Map([['battery',['Battery','Use special collection.','R8']],['food waste',['Food scraps','Keep food out of the dry bin.','R5']],['glass bottle',['Glass bottle','Use separate glass collection.','R4']],['glass jar',['Glass jar','Use separate glass collection.','R4']],['paper cup',['Lined cup','Separate components under the guide.','R6']],['drink carton',['Mixed carton','Keep out of this dry-recycling bin.','R6']],['crisp packet',['Multilayer wrapper','General-waste route under this sample guide.','R6']],['plastic film',['Flexible film','Not accepted by this dry-bin policy.','R6']],['single-use carrier bag',['Flexible plastic bag','Not accepted by this dry-bin policy.','R6']],['tissues',['Soiled paper / tissue','Use general waste under R7.','R7']],['pizza box',['Pizza box','Condition matters. Use the normal scanner to check clean and greasy sections.','R2']]]);
 for(const label of ['glass cup','broken glass'])unsafe.set(label,['Glass','Use separate glass collection; check safe handling for broken pieces.','R4']);
+for(const label of ['banana','apple','orange','broccoli','carrot','sandwich','pizza','hot dog','donut','cake'])unsafe.set(label,['Food / organic waste','Keep food out of this dry recycling bin.','R5']);
+for(const label of ['laptop','cell phone','mouse','keyboard'])unsafe.set(label,['Electronic waste','Use special collection for electronics.','R8']);
 for(const label of ['other plastic wrapper','garbage bag','polypropylene bag','aluminium blister pack','carded blister pack','foam cup','foam food container','styrofoam piece','squeezable tube','cigarette'])unsafe.set(label,['Not accepted packaging','This object is not verified for this dry-recycling bin. Check the normal scanner.','']);
 export function classifyDlc({material='',confidence=0,margin=0,threshold=1.01,similarity=1,minSimilarity=0,detections=[]}={}){
  const objects=detections.filter(d=>Number.isFinite(d.score)&&d.score>=.45&&Array.isArray(d.bbox)&&d.bbox[2]*d.bbox[3]>=.015).map(d=>({...d,class:String(d.class).trim().toLowerCase()}));
@@ -31,6 +33,7 @@ export function selectDlcTarget(detections=[],human={faces:[],palms:[]}){
  }).sort((a,b)=>b.score-a.score)[0]||null;
 }
 export function resolveDlcScene(prediction,target,human={faces:[],palms:[]}){
+ if(target){const label=String(target.class).toLowerCase();if(target.score>=.55){const bad=unsafe.get(label);if(bad)return {state:'reject',label:bad[0],reason:bad[1],rule:bad[2],confidence:target.score};if(rigid.has(label)||cans.has(label)||paperTypes.has(label)){const rule=cans.has(label)?'R3':rigid.has(label)?'R1':'R2';return {state:'accept',label:cans.has(label)?'Metal can / food tin':rigid.has(label)?'Rigid plastic packaging':'Paper / cardboard',reason:'Recognized by the live object detector. Only empty, clean and dry packaging belongs in this bin.',rule,confidence:target.score};}}}
  const hasHuman=(human.faces?.length||0)+(human.palms?.length||0)>0;
  if(hasHuman&&!target||['clothes','shoes','trash'].includes(prediction.material)&&(!target||hasHuman))return {state:'idle',label:hasHuman?'People and hands ignored':'Show only the waste item',reason:'No separate waste item is confirmed. Keep the item in the square; do not drop until green.',rule:''};
  if(prediction.similarity<prediction.minSimilarity)return {state:'checking',label:'Item not confirmed',reason:'Bring the waste closer and keep the background outside the square.',rule:''};
@@ -67,7 +70,7 @@ export class DlcDecisionGate{
 }
 export function frameSignature(pixels,size=224){const out=[];for(let y=4;y<size;y+=8)for(let x=4;x<size;x+=8){const p=(y*size+x)*4;out.push(pixels[p],pixels[p+1],pixels[p+2]);}return out;}
 export function sceneDifference(a,b){if(!a||a.length!==b?.length)return {mean:255,ratio:1};let total=0,changed=0;for(let i=0;i<a.length;i+=3){const delta=(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]))/3;total+=delta;if(delta>22)changed++;}return {mean:total/(a.length/3),ratio:changed/(a.length/3)};}
-export function canReusePackaging(cache,frame){if(!cache||!frame||cache.scene!==frame.scene||frame.capturedAt<cache.capturedAt||frame.capturedAt-cache.capturedAt>6000)return false;const difference=sceneDifference(cache.signature,frame.signature);return difference.mean<6&&difference.ratio<.10;}
+export function canReusePackaging(cache,frame){if(!cache||!frame||cache.scene!==frame.scene||frame.capturedAt<cache.capturedAt||frame.capturedAt-cache.capturedAt>6000)return false;const difference=sceneDifference(cache.signature,frame.signature);return difference.mean<30&&difference.ratio<.55;}
 export function predictMaterial(features,head){
  if(features.length!==head.featureCount)throw Error('DLC model and material head do not match.');
  const scores=head.weights.map((row,c)=>{let sum=head.bias[c];for(let i=0;i<features.length;i++)sum+=((features[i]-head.featureMean[i])/head.featureScale[i])*row[i];return sum;});
