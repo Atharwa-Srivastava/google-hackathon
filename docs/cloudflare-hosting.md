@@ -22,3 +22,6 @@ Secrets are stored in Cloudflare's runtime secret store, not GitHub source or bu
 The first deployment imported a consistent snapshot of the local backend SQLite database, including existing account hashes, bins and history. Keep the original database as a backup. Do not rerun the import against a populated production database. No frontend Firebase/member mappings existed in this local clone; existing identities require the original Firebase project and any mappings from the original deployment.
 
 Free hosting has usage quotas and does not include AI provider charges. Never change to paid plans without approval. No laptop or ngrok is needed for the Cloudflare deployment.
+GitHub build connections are configured for both Workers. Pushes to deploy-cloudflare trigger production builds; preview builds are disabled.
+
+Firebase runtime configuration is installed for the existing project hackathon-b4119. Its owner must add ecotracker.hypenn.xyz under Authentication -> Settings -> Authorized domains for Google popup/redirect sign-in. The signed-in Cloudflare owner's Google account does not have permission to change that Firebase project. Do not create a replacement Firebase project unless intentionally migrating user identities.
