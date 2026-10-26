@@ -2,7 +2,7 @@
 export async function visionAsset(path){
  const files=['model.json','name_map.json',...Array.from({length:7},(_,i)=>'group1-shard'+(i+1)+'of7.bin')],household=['model.json',...Array.from({length:5},(_,i)=>'group1-shard'+(i+1)+'of5')];let url;
  if(path==='/vision/tf.min.js')url='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
- else if(['/vision/dlc/ort.min.js','/vision/dlc/ort-wasm-simd-threaded.mjs','/vision/dlc/ort-wasm-simd-threaded.wasm'].includes(path))url='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/'+path.slice('/vision/dlc/'.length);
+ else if(path.startsWith('/vision/dlc/')&&['ort.min.js','ort.min.js.map','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm','ort-wasm-simd-threaded.jsep.mjs','ort-wasm-simd-threaded.jsep.wasm'].includes(path.slice('/vision/dlc/'.length)))url='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/'+path.slice('/vision/dlc/'.length);
  else if(path==='/vision/coco-ssd.min.js')url='https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
  else if(path.startsWith('/vision/household/')&&household.includes(path.slice('/vision/household/'.length)))url='https://storage.googleapis.com/tfjs-models/savedmodel/ssdlite_mobilenet_v2/'+path.slice('/vision/household/'.length);
  else if(path.startsWith('/vision/model/')&&files.includes(path.slice('/vision/model/'.length)))url='https://raw.githubusercontent.com/opensacorg/trash-ai/a11de7cb60bfb21399f64c57e48384a61a5044f7/frontend/public/model/'+path.slice('/vision/model/'.length);

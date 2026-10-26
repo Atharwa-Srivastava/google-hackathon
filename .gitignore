@@ -6,3 +6,13 @@ dist/server/
 dist/.openai/
 archive/
 archive.zip
+
+data/private/
+*.sqlite*
+
+# Cloudflare local credentials, generated assets and private migration exports
+.cloudflare/
+.wrangler/
+.dev.vars*
+*.private.sql
+*.zip

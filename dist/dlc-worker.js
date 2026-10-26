@@ -46,7 +46,7 @@ async function run(pixels,frame){
  const fresh=canReusePackaging(packagingCache,current),detections=fresh?packagingCache.detections:[];
  if(packagingReady&&!packagingPending&&(!fresh||frame.capturedAt-packagingCache.capturedAt>750)){
   packagingPending={id:frame.id,session:frame.session,...current};const copy=pixels.slice();packaging.postMessage({type:'frame',id:frame.id,pixels:copy.buffer},[copy.buffer]);
-  packageTimer=setTimeout(()=>{sendCoverage('Waste verification is slow; camera stays on.');packageTimer=setTimeout(()=>pausePackaging('Waste verifier paused after a stalled frame. Tap Retry detector.'),12000);},3500);
+  packageTimer=setTimeout(()=>{sendCoverage('Waste verification is analyzing; camera stays on.');packageTimer=setTimeout(()=>recoverPackaging('Waste verifier took too long. Retrying while camera stays open.'),45000);},4000);
  }
  const change=guardCache?sceneDifference(guardCache.signature,signature):{mean:255,ratio:1};
  const human=guardCache&&frame.capturedAt-guardCache.at<400&&change.mean<6&&change.ratio<.1?guardCache.human:await humanGuard.detect(pixels);guardCache={human,signature,at:frame.capturedAt};

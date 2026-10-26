@@ -1,0 +1,7 @@
+{
+  "name": "ecotracker",
+  "database_name": "ecotracker-data",
+  "database_id": "e3b5f8e5-dbc7-40d8-ba48-409b47ca99a7",
+  "backend_url": "https://ecotracker-api.hypenn.xyz",
+  "domain": "ecotracker.hypenn.xyz"
+}

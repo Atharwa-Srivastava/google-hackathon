@@ -50,14 +50,18 @@ for(const raw of ['meal carton','other carton','pop tab','glass cup','disposable
  ITEM_CLASSIFICATIONS[raw]={category:'CHECK',label:raw.charAt(0).toUpperCase()+raw.slice(1)};
 }
 Object.assign(ITEM_CLASSIFICATIONS,{
- 'cardboard':{category:'CHECK',label:'Cardboard · check grease',family:'cardboard'},
+ 'cardboard':{category:'DRY_RECYCLABLE',label:'Cardboard box · Dry recycling',catalog:'Cardboard box',family:'cardboard',tip:'Flatten clean cardboard and put in dry recycling.'},
  'other carton':{category:'CHECK',label:'Cardboard / carton · verify lining',family:'cardboard'},
  'banana peel':{category:'WET',label:'Banana peel',catalog:'Banana peel',family:'banana'},
  'orange peel':{category:'WET',label:'Orange peel',catalog:'Orange peel',family:'orange'},
  'vegetable scraps':{category:'WET',label:'Vegetable scraps',catalog:'Vegetable scraps'},
  'eggshells':{category:'WET',label:'Eggshells',catalog:'Eggshells'},
  'tea leaves':{category:'WET',label:'Loose tea leaves',catalog:'Tea leaves'},
- 'bottle':{category:'CHECK',label:'Bottle · verify material',family:'bottle',uncertain:true},
+ 'bottle':{category:'DRY_RECYCLABLE',label:'Plastic bottle',catalog:'Plastic bottle',family:'bottle',tip:'Empty, rinse away residue and let dry. Separate lids.'},
+ 'can':{category:'DRY_RECYCLABLE',label:'Metal can',catalog:'Drink can',family:'can',tip:'Empty metal can. Rinse and let dry.'},
+ 'tin can':{category:'DRY_RECYCLABLE',label:'Metal can',catalog:'Food tin',family:'can'},
+ 'aluminum can':{category:'DRY_RECYCLABLE',label:'Metal can',catalog:'Drink can',family:'can'},
+ 'plastic container':{category:'DRY_RECYCLABLE',label:'Rigid plastic container',catalog:'Rigid plastic container'},
  'cup':{category:'CHECK',label:'Cup · verify lining',family:'cup',uncertain:true},
  'rigid plastic container':{category:'DRY_RECYCLABLE',label:'Rigid plastic container',catalog:'Rigid plastic container'},
  'cardboard egg carton':{category:'DRY_RECYCLABLE',label:'Cardboard egg carton',catalog:'Cardboard egg carton',tip:'Keep clean and dry. Flatten cardboard. Separate any food-soiled sections.'},

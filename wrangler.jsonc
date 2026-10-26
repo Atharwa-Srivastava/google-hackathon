@@ -1,0 +1,40 @@
+{
+  "name": "ecotracker-api",
+  "main": "worker/cloudflare.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".cloudflare/assets",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api",
+      "/api/*",
+      "/vision/*",
+      "/dashboard",
+      "/action"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "REWARDS_DB",
+      "database_name": "ecotracker-data",
+      "database_id": "e3b5f8e5-dbc7-40d8-ba48-409b47ca99a7"
+    }
+  ],
+  "vars": {
+    "AI_PROVIDER": "apinex",
+    "APINEX_MODEL": "free/gemini-3.8-flash",
+    "GOOGLE_MODEL": "gemini-3.8-flash"
+  },
+  "account_id": "17fb701fab92c14f6a1a01e4cd695560",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "ecotracker-api.hypenn.xyz",
+      "custom_domain": true
+    }
+  ]
+}
